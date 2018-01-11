@@ -26,12 +26,24 @@ const tickDates = [ {startDate:  new Date("Nov 15 2016 00:00:00 GMT (GMT)"), end
 let prevScroll = 0;
 let prevCutOff = 0;
 let prevScrollDepth = 0;
+
 const interactiveChartEl = d3.select("#interactive-slot-1").append("div").classed("interactive-chart", true);
+
+const screenWidth = window.innerWidth;
+const isMobile = screenWidth < 740;
+
+const isiOS = document.body.classList.contains("ios");
+const isAndroid = document.body.classList.contains("android");
+
+const isApp = isiOS || isAndroid;
+
 const clientWidth = interactiveChartEl.node().clientWidth;
 const width = clientWidth < 620 ? clientWidth : 720;
 const height = clientWidth < 620 ? 450 : 900;
 const chartMargin = {top: 20, bottom: 20, right:10, left: 10}
 const bigDealThreshold = clientWidth < 620 ? 59999999 : 39999999;
+
+const elHeight = (!isiOS) ? interactiveChartEl.clientHeight : interactiveChartEl.clientHeight - 96;
 
 
  Promise.all([
@@ -128,6 +140,8 @@ const bigDealThreshold = clientWidth < 620 ? 59999999 : 39999999;
                 .attr("width", width)
                 .classed("line-chart", true); 
 
+            const svgEl = svg;
+
             const transfersLine = d3.line()
                 .x(d => xScale(d.utcStamp))
                 .y(d => yScale(d.totalSpendAfterDeal))
@@ -213,6 +227,8 @@ const bigDealThreshold = clientWidth < 620 ? 59999999 : 39999999;
                 .style("fill", "none")
                 .attr("d", transfersLine);
 
+            checkScroll(transfersLineEl, elHeight, lineLength, data, transfersLine, transfersLineElDashed, svg)
+
             const transfersLineElDashed = chartGroup.append("path")
                 .data([data])
                 .style("stroke", "#fc0")
@@ -252,14 +268,168 @@ const bigDealThreshold = clientWidth < 620 ? 59999999 : 39999999;
                             .attr("r", 3)
                             .attr("id", "circ_"+d.refNum)
                     }
-                });
+            });
+
+            document.querySelector("#hidden-svg path").setAttribute("d", transfersLine(data));
+
+            const lineLength = document.querySelector("#hidden-svg path").getTotalLength();
 
            function formatAbbreviation(x) {
               var v = Math.abs(x);
               return (v >= .9995e9 ? formatBillion
                   : v >= .9995e6 ? formatMillion
                   : formatThousand)(x);
-            }     
+            } 
+
+            function featureTest(property, value, noPrefixes) {
+                var prop = property + ':',
+                    el = document.createElement('test'),
+                    mStyle = el.style;
+
+                if (!noPrefixes) {
+                    mStyle.cssText = prop + ['-webkit-', '-moz-', '-ms-', '-o-', ''].join(value + ';' + prop) + value + ';';
+                } else {
+                    mStyle.cssText = prop + value;
+                }
+                return mStyle[property];
+            } 
+
+            var chartEl = document.querySelector(".interactive-chart");
+
+            var scrollDepth, scrollToUse;
+
+
+            function checkScroll(transfersLineEl, elHeight, lineLength, data, transfersLine, transfersLineElDashed, svg) {
+               console.log("h2")
+                window.requestAnimationFrame(() => {
+                    const scroll = window.pageYOffset;
+                    if (scroll !== prevScroll) {
+                        const elOffset = chartEl.getBoundingClientRect().top + scroll;
+                        if (!featureTest('position', 'sticky') && !featureTest('position', '-webkit-sticky')) {
+                            const offset = chartEl.getBoundingClientRect().top + scroll;
+
+                            if (offset + elHeight - window.innerHeight <= scroll) {
+                                svgEl.style.position = "absolute";
+                                svgEl.style.bottom = "0px";
+                                svgEl.style.top = "auto";
+                            } else if (offset <= scroll) {
+                                svgEl.style.position = "fixed";
+                                svgEl.style.bottom = "";
+                                svgEl.style.top = "";
+                            } else {
+                                svgEl.style.position = "";
+                            }
+                        }
+
+                        prevScroll = scroll;
+
+                        scrollToUse = scroll - elOffset;
+                        scrollDepth = 1.1*(scrollToUse / (elHeight - height));
+
+                        doScrollEvent(transfersLineEl, elHeight, lineLength, data, transfersLine, transfersLineElDashed, svg);
+                    }
+
+                    checkScroll(transfersLineEl, elHeight, lineLength, data, transfersLine, transfersLineElDashed, svg);
+                });
+            }
+
+
+            function doScrollEvent(transfersLineEl, elHeight, lineLength, data, transfersLine, transfersLineElDashed, svg) {
+                        if (scrollDepth < 0) {
+                            scrollDepth = 0
+                        }
+
+                        if (scrollDepth > 1) {
+                            scrollDepth = 1;
+                        }
+
+                        if (scrollDepth < prevScrollDepth) {
+                            return;
+                        }
+
+                        // console.log(scrollDepth)
+
+                        const depthChange = Math.abs(scrollDepth - prevScrollDepth);
+                        // console.log(healthcarePopulationData)
+                        const cutOff = Math.min(165, Math.floor(data.length * scrollDepth));
+                        console.log(data.length, cutOff)
+                        console.log("PROBLEM HERE cutoff and scrollDepth generate NaN -- ", cutOff, Math.floor(data.length * scrollDepth))
+
+                        transfersLineElDashed
+                            .attr("d", transfersLine(data.filter((d, i) => i <= cutOff)))
+
+                        transfersLineEl
+                            .attr("d", transfersLine(data.filter((d, i) => { return Number(d.utcStamp) < tickDates[2].endDate.getTime() && i <= cutOff; })))
+                            .transition().duration(2500 * depthChange).style("stroke-dashoffset", lineLength - (lineLength * scrollDepth))
+
+                        // .transition().duration(2500 * depthChange).style("stroke-dashoffset", lineLength - (lineLength * scrollDepth))
+
+                        // if (prevCutOff !== cutOff) {
+                        //     try {
+                        //         const yearBoundaries = [healthcarePopulationData[prevCutOff], healthcarePopulationData[cutOff]];
+                        //         const newCountriesWithHealthcare = healthcareData.filter((d) => Number(d.start) > yearBoundaries[0].year && Number(d.start) <= yearBoundaries[1].year);
+
+                                // if (newCountriesWithHealthcare.length > 0) {
+                                //     newCountriesWithHealthcare.forEach((d) => {
+                                //         let stack = stackData.find((e) => e.key === d.country);
+                                     
+
+                                //         if(d["mega-highlight"] === "yes") {
+                                //             svg.append("circle")
+                                //                 .attr("cx", xScale(Number(d.start)))
+                                //                 .attr("cy", yScale(stack[0][1]))
+                                //                 .attr("r", 0)
+                                //                 .style("fill", "#69d1ca")
+                                //                 .style("stroke", "none")
+                                //                 .classed("pulsing", true)
+                                //         }
+
+                                //         if (d.highlight === "yes") {
+                                //             svg.append("text")
+                                //                 .text(d.country)
+                                //                 .attr("x", xScale(Number(d.start)))
+                                //                 .attr("y", yScale(stack[0][1]))
+                                //                 .classed("country-label", true)
+                                //                 .style("text-anchor", "end")
+                                //                 .attr("dy", 3)
+                                //                 .attr("dx", -8)
+                                //                 .style("font-weight", (d["mega-highlight"] === "yes") ? "900" : "normal")
+                                //                 .style("fill", (d["mega-highlight"] === "yes") ? "#000" : "#767676")
+
+                                //             svg.append("circle")
+                                //                 .attr("cx", xScale(Number(d.start)))
+                                //                 .attr("cy", yScale(stack[0][1]))
+                                //                 .attr("r", 0)
+                                //                 .style("stroke", "#69d1ca")
+                                //                 .style("stroke-width", "1.5px")
+                                //                 .style("fill", (d["mega-highlight"] === "yes") ? "#69d1ca" : "#fff")
+                                //                 .transition()
+                                //                 .duration(250)
+                                //                 .attr("r", 4)
+                                //                 .transition()
+                                //                 .duration(250)
+                                //                 .attr("r", 3)
+                                //         }
+
+                                //         let fullData = healthcareData.filter((a) => stack.key === a.country)[0];
+
+                                //         stack = stack.filter((a) => !(Number(fullData.start) > Number(a.data.year)));
+
+                                        
+
+
+
+                                //     });
+                                // }
+                        //     } catch (err) {
+                        //         console.log(err)
+                        //     }
+                        // }
+
+                        prevScrollDepth = scrollDepth;
+                        prevCutOff = cutOff;
+                    }
+
  })
 
 
