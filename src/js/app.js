@@ -13,9 +13,13 @@ import * as d3Transition from 'd3-transition'
 import * as d3Request from 'd3-request'
 import * as d3Time from 'd3-time'
 
-const d3 = Object.assign({}, d3Scale, d3Array, d3Axis, d3Collection, d3Format, d3Scale, d3Select, d3Shape, d3Transition, d3Request, d3Time)
+const d3 = Object.assign({}, d3Scale, d3Array, d3Axis, d3Collection, d3Format, d3Scale, d3Select, d3Shape, d3Transition, d3Request, d3Time);
 
-console.log(d3);
+var tickDates = [ {startDate:  new Date("Dec 30 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Jan 31 2017 00:00:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Sep 30 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
+
+// console.log(new Date("Dec 30 2016 00:00:00 GMT (GMT)").getTime())
+
+// console.log(d3);
 
  Promise.all([
         loadJson(process.env.PATH + "/assets/data/transfers.json")
@@ -42,8 +46,10 @@ console.log(d3);
 	        if(!isNaN(tempdateStamp)){
 	        	transfer.dateStamp = tempdateStamp;
 	        	transfer.utcStamp = tempdateStamp.getTime();
-	        	//console.log("WORKS ",transfer['Player name'],transfer.utcStamp)
+	        	//console.log("WORKS ",transfer['Player name'],transfer.dateStamp)
 	        }
+
+
 
 	        if(isNaN(tempdateStamp)){
 	        	console.log("ERROR", transfer['Player name'],transfer.Timestamp )
@@ -53,8 +59,8 @@ console.log(d3);
 
 
 		var maxFee = d3.max(data, function(d) { return +d.longFee;} );
-		var minDate = d3.min(data, function(d) { return +d.utcStamp;} );
-		var maxDate = d3.max(data, function(d) { return +d.utcStamp;} );
+		var minDate = tickDates[0].startDate.getTime();
+		var maxDate = tickDates[2].endDate.getTime();
 
     	const el = d3.select("#interactive-slot-1").append("div").classed("interactive-chart", true);
         const clientWidth = el.node().clientWidth;
@@ -62,11 +68,11 @@ console.log(d3);
         const width = clientWidth < 620 ? clientWidth : 720;
         const height = clientWidth < 620 ? 450 : 900;
 
-        const chartMargin = {top: 0, bottom: 20, right:0, left: 10}
+        const chartMargin = {top: 0, bottom: 20, right:10, left: 10}
 
         const timeScale = d3.scaleLinear()
             .domain([minDate, maxDate])
-            .range([0, width]);
+            .range([0, width-chartMargin.right]);
 
         const yScale = d3.scaleLinear()
             .domain([0, maxFee])
@@ -96,10 +102,11 @@ console.log(d3);
                 .curve(d3.curveStepAfter);
 
             const xAxis = d3.axisBottom(timeScale)
-                .tickValues([minDate, maxDate]);
+                .tickValues([tickDates[0].startDate.getTime(), tickDates[0].endDate.getTime(), tickDates[1].startDate.getTime(), tickDates[1].endDate.getTime(), tickDates[2].startDate.getTime(), tickDates[2].endDate.getTime()]);
 
             const yAxis = d3.axisLeft(yScale)
-                .ticks(0);
+                .tickSize(width)
+                .ticks(4);
 
             svg.append("g").classed("x-axis", true).call(xAxis).style("transform", "translateY(" + height + "px)")
 
@@ -109,7 +116,8 @@ console.log(d3);
 
             svg.selectAll(".domain").remove();
             svg.selectAll(".y-axis text").attr("x", 0).attr("dy", "-4").style("text-anchor", "start");
-            svg.selectAll(".y-axis line").attr("x", 0).attr("x2", "5")
+            svg.selectAll(".y-axis .tick:not(:first-of-type) line").attr("stroke", "#777").attr("stroke-dasharray", "2,2");
+            svg.selectAll(".y-axis line").attr("x", 0).attr("x2", width)
 
             svg.select(".y-axis").append("line")
                 .attr("x1", 0)
@@ -128,10 +136,16 @@ console.log(d3);
                 .text("")
 
             svg.selectAll(".x-axis .tick:first-of-type text")
-                .text("Jun 1 2016")
+                .text("Jan 2016").style("text-anchor", "start");
 
-            svg.selectAll(".x-axis .tick:last-of-type text")
-                .text("31 Jan 2018")        
+            svg.selectAll(".x-axis .tick:nth-child(3) text")
+                .text("Summer 2017").style("text-anchor", "start");
+
+            svg.selectAll(".x-axis .tick:nth-child(5) text")
+                .text("Jan 2017").style("text-anchor", "start");
+
+            svg.selectAll(".y-axis .tick:first-of-type")
+                .style("display", "none");
  })
 
 
