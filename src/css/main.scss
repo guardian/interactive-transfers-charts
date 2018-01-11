@@ -24,6 +24,15 @@
 }
 
 .x-axis path, .x-axis line, .y-axis path, .y-axis line {
-    stroke: #767676 !important;
+    stroke: #AAA !important;
+
 }
 
+
+.x-axis path, .x-axis line{
+	stroke: #999 !important;
+}
+
+svg line{
+	shape-rendering: optimizeSpeed !important;
+}
