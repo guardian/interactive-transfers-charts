@@ -15,6 +15,11 @@ import * as d3Time from 'd3-time'
 
 const d3 = Object.assign({}, d3Scale, d3Array, d3Axis, d3Collection, d3Format, d3Scale, d3Select, d3Shape, d3Transition, d3Request, d3Time);
 
+const formatNumber = d3.format(".0f"),
+    formatBillion = function(x) { return "£"+formatNumber(x / 1e9) + "bn"; },
+    formatMillion = function(x) { return "£"+formatNumber(x / 1e6) + "m"; },
+    formatThousand = function(x) { return "£"+formatNumber(x / 1e3) + " thousand"; };
+
 var tickDates = [ {startDate:  new Date("Dec 30 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Jan 31 2017 00:00:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Sep 30 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
 
 // console.log(new Date("Dec 30 2016 00:00:00 GMT (GMT)").getTime())
@@ -27,7 +32,7 @@ var tickDates = [ {startDate:  new Date("Dec 30 2016 00:00:00 GMT (GMT)"), endDa
     .then((allData) => {
 
     	const data = allData[0].sheets.allDeals;
-    	
+
     	data.map((transfer) => {
 	        if( !isNaN(transfer["Price in £"]) ){
 	        	transfer.shortFee = Number(transfer["Price in £"] / 1000000);
@@ -106,7 +111,7 @@ var tickDates = [ {startDate:  new Date("Dec 30 2016 00:00:00 GMT (GMT)"), endDa
 
             const yAxis = d3.axisLeft(yScale)
                 .tickSize(width)
-                .ticks(4);
+                .ticks(4).tickFormat(formatAbbreviation);
 
             svg.append("g").classed("x-axis", true).call(xAxis).style("transform", "translateY(" + height + "px)")
 
@@ -146,6 +151,15 @@ var tickDates = [ {startDate:  new Date("Dec 30 2016 00:00:00 GMT (GMT)"), endDa
 
             svg.selectAll(".y-axis .tick:first-of-type")
                 .style("display", "none");
+
+
+
+           function formatAbbreviation(x) {
+              var v = Math.abs(x);
+              return (v >= .9995e9 ? formatBillion
+                  : v >= .9995e6 ? formatMillion
+                  : formatThousand)(x);
+            }     
  })
 
 
