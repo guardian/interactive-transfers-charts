@@ -45,8 +45,6 @@ const bigDealThreshold = clientWidth < 620 ? 59999999 : 39999999;
 
 const elHeight = height;
 
-console.log("elHeight" , elHeight);
-
  Promise.all([
         loadJson(process.env.PATH + "/assets/data/transfers.json")
     ])
@@ -97,7 +95,7 @@ console.log("elHeight" , elHeight);
 
 	    })
 
-         // Get an array of checkout values only
+        // Get an array of checkout values only
         var allFees = data.map(function(item) {
             return item.longFee;
         });
@@ -108,7 +106,6 @@ console.log("elHeight" , elHeight);
         });
 
         // console.log(formatAbbreviation(grandTotalFee))
-
 		var maxFee = grandTotalFee;
 		var minDate = tickDates[0].startDate.getTime();
 		var maxDate = tickDates[2].endDate.getTime();
@@ -156,8 +153,6 @@ console.log("elHeight" , elHeight);
             //     .x(function(d) {console.log(d, "log"); return xScale(d.utcStamp)})
             //     .y(d => yScale(d.totalSpendAfterDeal))
             //     .curve(d3.curveStepAfter)
-
-
 
             const xAxis = d3.axisBottom(xScale)
                 .tickValues([tickDates[0].startDate.getTime(), tickDates[0].endDate.getTime(), tickDates[1].startDate.getTime(), tickDates[1].endDate.getTime(), tickDates[2].startDate.getTime(), tickDates[2].endDate.getTime()]);
@@ -254,7 +249,7 @@ console.log("elHeight" , elHeight);
 
             const lineLength = document.querySelector("#hidden-svg path").getTotalLength();
 
-            console.log(lineLength)
+            console.log("lineLength",lineLength)
             
 
                 data.forEach((d) => {
@@ -314,7 +309,7 @@ console.log("elHeight" , elHeight);
 
             
 
-            checkScroll() 
+            checkScroll(); 
             
             window.addEventListener("scroll", checkScroll);
 
@@ -339,34 +334,34 @@ console.log("elHeight" , elHeight);
                             } else {
                                 svgEl.style.position = "";
                             }
+
+                            console.log(scroll, offset);
                         }
 
                         prevScroll = scroll;
 
                         const scrollToUse = scroll - elOffset;
                         const scrollDepth = 1.1*(scrollToUse / (elHeight - height));
-
+                        
                         doScrollEvent();
                     } 
 
                 
-                    //checkScroll()
-                console.log(scroll);
 
             }
 
             function doScrollEvent() {
-                      const maskedLine = document.getElementById("transfersLineDashed");
-                      const mask =  document.getElementById("transferMaskLine");
-                      var length = maskedLine.getTotalLength();   
-                      var scrollpercent = (document.body.scrollTop + document.documentElement.scrollTop) / (document.documentElement.scrollHeight - document.documentElement.clientHeight);
-                      // Length to offset the dashes
-                      var draw = length * scrollpercent;
-                      // Reverse the drawing (when scrolling upwards)
-                      maskedLine.style.strokeDashoffset = length - draw;
+                  const maskedLine = document.getElementById("transfersLineDashed");
+                  const mask =  document.getElementById("transferMaskLine");
+                  var length = maskedLine.getTotalLength();   
+                  var scrollpercent = (document.body.scrollTop + document.documentElement.scrollTop) / (document.documentElement.scrollHeight - document.documentElement.clientHeight);
+                  // Length to offset the dashes
+                  var draw = length * scrollpercent;
+                  // Reverse the drawing (when scrolling upwards)
+                  maskedLine.style.strokeDashoffset = length - draw;
 
-                      let endPoint = maskedLine.getPointAtLength(draw);
-                      //USE THIS to show circles -- console.log("endPoint",endPoint)
+                  let endPoint = maskedLine.getPointAtLength(draw);
+                  //USE THIS to show circles -- console.log("endPoint",endPoint)
             }
 
  })

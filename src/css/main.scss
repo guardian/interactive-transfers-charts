@@ -23,16 +23,31 @@
     margin-bottom: 6px;
 }
 
-.x-axis path, .x-axis line, .y-axis path, .y-axis line {
-    stroke: #AAA !important;
-
-}
 
 
-.x-axis path, .x-axis line{
-	stroke: #999 !important;
-}
 
-svg line{
-	// shape-rendering: optimizeSpeed !important;
+.interactive-chart {
+    position: relative;
+
+    svg {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        overflow: visible;
+        height: 100vh; // display: block;
+    }
+
+    svg line{
+    	 shape-rendering: optimizeSpeed !important;
+    }
+
+    .x-axis path, .x-axis line, .y-axis path, .y-axis line {
+        stroke: #AAA !important;
+
+    }
+
+
+    .x-axis path, .x-axis line{
+        stroke: #999 !important;
+    }
 }
