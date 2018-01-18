@@ -27,6 +27,7 @@
 
 
 .interactive-chart {
+    height: 400vh;
     position: relative;
 
     svg {
@@ -50,4 +51,69 @@
     .x-axis path, .x-axis line{
         stroke: #999 !important;
     }
+
+    .chart-text {
+        position: absolute;
+        z-index: 400;
+        width: 100%;
+        top: 60px;
+
+        .text-wrapper {
+            // margin-bottom: 60vh;
+            height: 100vh;
+            position: relative;
+            @include mq(tablet) {
+                width: 620px;
+            }
+            @include mq(leftCol) {
+                margin-left: 160px;
+            }
+            @include mq(wide) {
+                margin-left: 240px;
+            }
+
+            p {
+                margin-left: 0 !important;
+            }
+
+            position: relative;
+            width: 100%;
+
+            &:last-of-type {
+                margin-top: -100px;
+            }
+        }
+
+        p {
+            display: inline;
+            background-color: rgba(230, 230, 230, 0.95);
+            color: #333;
+            padding: 5px 5px 5px 5px;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+
+            @include fs-headline(2);
+            line-height: 28px;
+            @include mq(tablet) {
+                padding: 5px 5px 5px 5px;
+                @include fs-headline(3);
+                line-height: 32px; // padding-bottom: 24px;
+            }
+
+            span {
+                color: #69d1ca;
+                font-weight: bold;
+            }
+        }
+
+        .p-wrapper {
+            display: block;
+            position: absolute;
+            bottom: 0;
+            @include mq(tablet) {
+                bottom: 10vh;
+            }
+        }
+    }
+    
 }

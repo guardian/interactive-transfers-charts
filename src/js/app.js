@@ -36,7 +36,7 @@ const isiOS = document.body.classList.contains("ios");
 const isAndroid = document.body.classList.contains("android");
 
 const isApp = isiOS || isAndroid;
-
+console.log(interactiveChartEl.node().clientWidth)
 const clientWidth = interactiveChartEl.node().clientWidth;
 const width = clientWidth < 620 ? clientWidth : 720;
 const height = clientWidth < 620 ? 450 : 900;
@@ -44,6 +44,10 @@ const chartMargin = {top: 20, bottom: 20, right:10, left: 10}
 const bigDealThreshold = clientWidth < 620 ? 59999999 : 39999999;
 
 const elHeight = height;
+
+
+
+
 
  Promise.all([
         loadJson(process.env.PATH + "/assets/data/transfers.json")
@@ -122,13 +126,23 @@ const elHeight = height;
         const wrapper = interactiveChartEl.append("div")
                 .classed("line-wrapper", true);   
                 
-        wrapper.append("h3")
-                .html("Chart title here")
-                .classed("line-header", true);
+        // wrapper.append("h3")
+        //         .html("Chart title here")
+        //         .classed("line-header", true);
 
-            // wrapper.append("div")
-            //     .html(text.filter(d => d.code === site.siteMeta["@SiteCode"])[0].text)
-            //     .classed("line-desc", true)
+        wrapper.append("div")
+                .html("<div class='p-wrapper'><p>In <span>Germany</span>, the world’s first national health insurance system shows how UHC often evolves from an initial law. Originally for industrial labourers, cover gradually expanded to cover all job sectors and social groups, with today’s German workers contributing around 15% of their monthly salary, half paid by employers, to public sickness funds.</p></div>")
+                .classed("text-wrapper", true);        
+        wrapper.append("div")
+                .html("<div class='p-wrapper'><p>In <span>Germany</span>, the world’s first national health insurance system shows how UHC often evolves from an initial law. Originally for industrial labourers, cover gradually expanded to cover all job sectors and social groups, with today’s German workers contributing around 15% of their monthly salary, half paid by employers, to public sickness funds.</p></div>")
+                .classed("text-wrapper", true);      
+        wrapper.append("div")
+                .html("<div class='p-wrapper'><p>In <span>Germany</span>, the world’s first national health insurance system shows how UHC often evolves from an initial law. Originally for industrial labourers, cover gradually expanded to cover all job sectors and social groups, with today’s German workers contributing around 15% of their monthly salary, half paid by employers, to public sickness funds.</p></div>")
+                .classed("text-wrapper", true);      
+        wrapper.append("div")
+                .html("<div class='p-wrapper'><p>In <span>Germany</span>, the world’s first national health insurance system shows how UHC often evolves from an initial law. Originally for industrial labourers, cover gradually expanded to cover all job sectors and social groups, with today’s German workers contributing around 15% of their monthly salary, half paid by employers, to public sickness funds.</p></div>")
+                .classed("text-wrapper", true);      
+
 
             const svg = wrapper
                 .append("svg")
@@ -221,6 +235,7 @@ const elHeight = height;
             //     .style("fill", "none")
             //     .attr("id","transferLine")
             //     .attr("d", transfersLine); 
+            
             var mask = svg.append("defs")
                  .append("mask")
                  .attr("id", "dashMaskLine");
@@ -241,9 +256,7 @@ const elHeight = height;
                 .attr("d", transfersLine)
                 .style("stroke-dashoffset", "1px")
                 .style("stroke-dasharray", "1481")
-                .attr("mask","url(#dashMaskLine)");
-
-              
+                .attr("mask","url(#dashMaskLine)");  
 
             document.querySelector("#hidden-svg path").setAttribute("d", transfersLine(data));
 
@@ -345,8 +358,6 @@ const elHeight = height;
                         
                         doScrollEvent();
                     } 
-
-                
 
             }
 
