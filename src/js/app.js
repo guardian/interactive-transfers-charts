@@ -13,6 +13,10 @@ import * as d3Transition from 'd3-transition'
 import * as d3Request from 'd3-request'
 import * as d3Time from 'd3-time'
 
+import { scaleDiscontinuous, discontinuityRange } from 'd3fc-discontinuous-scale';
+
+import {groupBy, sortByKeys, shuffle, compareValues, changeFirstObj, dedupe } from './libs/arrayUtils';
+
 const d3 = Object.assign({}, d3Scale, d3Array, d3Axis, d3Collection, d3Format, d3Scale, d3Select, d3Shape, d3Transition, d3Request, d3Time);
 
 const formatNumber = d3.format(".0f"),
@@ -21,7 +25,9 @@ const formatNumber = d3.format(".0f"),
     formatThousand = function(x) { return "£"+formatNumber(x / 1e3) + " thousand"; 
 };
 
-const tickDates = [ {startDate:  new Date("Nov 15 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Jan 31 2017 00:00:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Sep 30 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
+const tickDates = [ {startDate:  new Date("Dec 20 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Jan 31 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Sep 30 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
+const windowClosureDates = [ {startDate: new Date("Feb 1 2017 00:01:00 GMT (GMT)"), endDate: new Date("May 14 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("Sep 1 2017 00:01:00 GMT+0100 (BST)"), endDate:  new Date("Dec 14 2017 23:59:00 GMT (GMT)")} ];
+
 
 let prevScroll = 0;
 let prevCutOff = 0;
@@ -42,11 +48,7 @@ const width = clientWidth < 620 ? clientWidth : 720;
 const height = clientWidth < 620 ? 450 : 900;
 const chartMargin = {top: 20, bottom: 20, right:10, left: 10}
 const bigDealThreshold = clientWidth < 620 ? 59999999 : 39999999;
-
 const elHeight = height;
-
-
-
 
 
  Promise.all([
@@ -55,6 +57,8 @@ const elHeight = height;
     .then((allData) => {
 
     	const data = allData[0].sheets.allDeals;
+
+        
 
         let tempTotalFee = 0;
 
@@ -88,15 +92,14 @@ const elHeight = height;
 	        if(!isNaN(tempdateStamp)){
 	        	transfer.dateStamp = tempdateStamp;
 	        	transfer.utcStamp = tempdateStamp.getTime();
+
+                transfer.transferWindow = getTransferWindow(transfer.dateStamp); 
 	        	//console.log("WORKS ",transfer['Player name'],transfer.dateStamp)
 	        }
 
 	        if(isNaN(tempdateStamp)){
 	        	console.log("ERROR", transfer['Player name'],transfer.Timestamp )
 	        }
-
-
-
 	    })
 
         // Get an array of checkout values only
@@ -114,7 +117,18 @@ const elHeight = height;
 		var minDate = tickDates[0].startDate.getTime();
 		var maxDate = tickDates[2].endDate.getTime();
 
-        const xScale = d3.scaleLinear()
+        var closedStartsI = windowClosureDates[0].startDate.getTime();
+        var closedEndsI = windowClosureDates[0].endDate.getTime();
+        var closedStartsII = windowClosureDates[1].startDate.getTime();
+        var closedEndsII = windowClosureDates[1].endDate.getTime();
+
+        // var scale = scaleDiscontinuous(scaleLinear())
+        //     .discontinuityProvider(discontinuityRange([50, 75]))
+        //     .domain([0, 100])
+        //     .range([0, 550]);
+
+        const xScale = scaleDiscontinuous(d3.scaleLinear())
+            .discontinuityProvider(discontinuityRange([closedStartsI, closedEndsI], [closedStartsII, closedEndsII]))
             .domain([minDate, maxDate])
             .range([0, width-chartMargin.right]);
 
@@ -125,22 +139,25 @@ const elHeight = height;
 
         const wrapper = interactiveChartEl.append("div")
                 .classed("line-wrapper", true);   
-                
-        // wrapper.append("h3")
-        //         .html("Chart title here")
-        //         .classed("line-header", true);
 
-        wrapper.append("div")
-                .html("<div class='p-wrapper'><p>In <span>Germany</span>, the world’s first national health insurance system shows how UHC often evolves from an initial law. Originally for industrial labourers, cover gradually expanded to cover all job sectors and social groups, with today’s German workers contributing around 15% of their monthly salary, half paid by employers, to public sickness funds.</p></div>")
+        wrapper.append("h3")
+                .html("Chart title here")
+                .classed("line-header", true);
+
+        const textWrapper = wrapper.append("div")
+                .classed("chart-text",true) 
+                
+        textWrapper.append("div")
+                .html("<div class='p-wrapper'><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p></div>")
                 .classed("text-wrapper", true);        
-        wrapper.append("div")
-                .html("<div class='p-wrapper'><p>In <span>Germany</span>, the world’s first national health insurance system shows how UHC often evolves from an initial law. Originally for industrial labourers, cover gradually expanded to cover all job sectors and social groups, with today’s German workers contributing around 15% of their monthly salary, half paid by employers, to public sickness funds.</p></div>")
+        textWrapper.append("div")
+                .html("<div class='p-wrapper'><p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. </p></div>")
                 .classed("text-wrapper", true);      
-        wrapper.append("div")
-                .html("<div class='p-wrapper'><p>In <span>Germany</span>, the world’s first national health insurance system shows how UHC often evolves from an initial law. Originally for industrial labourers, cover gradually expanded to cover all job sectors and social groups, with today’s German workers contributing around 15% of their monthly salary, half paid by employers, to public sickness funds.</p></div>")
+        textWrapper.append("div")
+                .html("<div class='p-wrapper'><p>Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.</p></div>")
                 .classed("text-wrapper", true);      
-        wrapper.append("div")
-                .html("<div class='p-wrapper'><p>In <span>Germany</span>, the world’s first national health insurance system shows how UHC often evolves from an initial law. Originally for industrial labourers, cover gradually expanded to cover all job sectors and social groups, with today’s German workers contributing around 15% of their monthly salary, half paid by employers, to public sickness funds.</p></div>")
+        textWrapper.append("div")
+                .html("<div class='p-wrapper'><p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio.</p></div>")
                 .classed("text-wrapper", true);      
 
 
@@ -298,7 +315,23 @@ const elHeight = height;
                     }
             });
 
-            
+            let teamsData = groupBy(data, 'What is the new club?');
+
+            teamsData = sortByKeys(teamsData);
+           
+            teamsData.forEach((team) => {
+                team.totalSpent = 0;
+                
+                team.objArr.map((player,i) => {
+                    team.totalSpent += player.longFee;
+                })
+
+               
+            });
+
+            teamsData = teamsData.sort((a, b) => b.totalSpent - a.totalSpent);
+            console.log(teamsData);
+
 
            function formatAbbreviation(x) {
               var v = Math.abs(x);
@@ -320,13 +353,21 @@ const elHeight = height;
                 return mStyle[property];
             } 
 
-            
+            function getTransferWindow(dateIn){
+                var winStr;
+                if(dateIn > tickDates[0].startDate && dateIn < tickDates[0].endDate){ winStr = "jan2017" }; 
+                if(dateIn > tickDates[1].startDate && dateIn < tickDates[1].endDate){ winStr = "summer2017" }; 
+                if(dateIn > tickDates[2].startDate && dateIn < tickDates[2].endDate){ winStr = "jan2018" }; 
+                return winStr;
+            }
 
             checkScroll(); 
             
             window.addEventListener("scroll", checkScroll);
 
             function checkScroll(){
+
+                console.log("scroll check")
                 let targetChartEl = document.querySelector(".interactive-chart");
                 const scroll = window.pageYOffset;
 
