@@ -1,4 +1,3 @@
-
 import loadJson from "../components/load-json"
 
 import * as d3Scale from 'd3-scale'
@@ -20,14 +19,15 @@ import {groupBy, sortByKeys, shuffle, compareValues, changeFirstObj, dedupe } fr
 const d3 = Object.assign({}, d3Scale, d3Array, d3Axis, d3Collection, d3Format, d3Scale, d3Select, d3Shape, d3Transition, d3Request, d3Time);
 
 const formatNumber = d3.format(".0f"),
-    formatBillion = function(x) { return "£"+formatNumber(x / 1e9) + "bn"; },
-    formatMillion = function(x) { return "£"+formatNumber(x / 1e6) + "m"; },
-    formatThousand = function(x) { return "£"+formatNumber(x / 1e3) + " thousand"; 
+    formatBillion = function(x) { return formatNumber(x / 1e9) + "bn"; },
+    formatMillion = function(x) { return formatNumber(x / 1e6) + "m"; },
+    formatThousand = function(x) { return formatNumber(x / 1e3) + " thousand"; 
 };
+
+const selectedLeagues = ["Premier League","La Liga","Ligue 1","Serie A","Bundesliga"];
 
 const tickDates = [ {startDate:  new Date("Dec 20 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Jan 31 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Sep 30 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
 const windowClosureDates = [ {startDate: new Date("Feb 1 2017 00:01:00 GMT (GMT)"), endDate: new Date("May 14 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("Sep 1 2017 00:01:00 GMT+0100 (BST)"), endDate:  new Date("Dec 14 2017 23:59:00 GMT (GMT)")} ];
-
 
 let prevScroll = 0;
 let prevCutOff = 0;
@@ -42,13 +42,15 @@ const isiOS = document.body.classList.contains("ios");
 const isAndroid = document.body.classList.contains("android");
 
 const isApp = isiOS || isAndroid;
-console.log(interactiveChartEl.node().clientWidth)
+
 const clientWidth = interactiveChartEl.node().clientWidth;
 const width = clientWidth < 620 ? clientWidth : 720;
 const height = clientWidth < 620 ? 450 : 900;
 const chartMargin = {top: 20, bottom: 20, right:10, left: 10}
 const bigDealThreshold = clientWidth < 620 ? 59999999 : 39999999;
 const elHeight = height;
+
+const maxSumFee = 300000000; //300m
 
 
  Promise.all([
@@ -58,11 +60,20 @@ const elHeight = height;
 
     	const data = allData[0].sheets.allDeals;
 
-        
-
         let tempTotalFee = 0;
 
+        //var buyData = groupBy(data, 'What is the new club?');
+
     	data.map((transfer,i) => {
+            if(transfer['What is the new league?'] === selectedLeagues[0] || transfer['What is the new league?'] === selectedLeagues[1] ||transfer['What is the new league?'] === selectedLeagues[2] || transfer['What is the new league?'] === selectedLeagues[3] || transfer['What is the new league?'] === selectedLeagues[4]){
+                transfer.transferBuyLeague = transfer['What is the new league?'];
+                transfer.selectLeagueBuy = true;  
+            }
+
+            if(transfer['What was the previous league?'] === selectedLeagues[0] || transfer['What was the previous league?'] === selectedLeagues[1] ||transfer['What was the previous league?'] === selectedLeagues[2] || transfer['What was the previous league?'] === selectedLeagues[3] || transfer['What was the previous league?'] === selectedLeagues[4]){
+                transfer.transferSellLeague = transfer['What was the previous league?'];
+                transfer.selectLeagueSale = true; 
+            }
 
             transfer.refNum = i;
             transfer.playerName = transfer['Player name'];
@@ -81,7 +92,6 @@ const elHeight = height;
             if(transfer.longFee > bigDealThreshold){
                 transfer.bigDeal = true;
             }
-
 
             tempTotalFee += transfer.longFee;
             transfer.totalSpendAfterDeal = tempTotalFee;
@@ -211,7 +221,7 @@ const elHeight = height;
                             .style("font-size","13px")
                             .style("font-weight", "700" )
                             .style("fill", "#333");
-            chartGroup.selectAll(".y-axis .tick:not(:first-of-type) line").attr("stroke", "#CCC").attr("stroke-width","1px").attr("stroke-dasharray", "1,2");
+            chartGroup.selectAll(".y-axis .tick:not(:first-of-type) line").attr("stroke", "#dcdcdc").attr("stroke-width","1px").attr("stroke-dasharray", "1,1");
             chartGroup.selectAll(".y-axis line").attr("x", 0).attr("x2", width)
 
             chartGroup.select(".y-axis").append("line")
@@ -282,7 +292,7 @@ const elHeight = height;
             console.log("lineLength",lineLength)
             
 
-                data.forEach((d) => {
+            data.forEach((d) => {
                     if (d.bigDeal) {
                         chartGroup.append("text")
                             .text(d.playerName)
@@ -315,30 +325,12 @@ const elHeight = height;
                     }
             });
 
-            let teamsData = groupBy(data, 'What is the new club?');
 
-            teamsData = sortByKeys(teamsData);
-           
-            teamsData.forEach((team) => {
-                team.totalSpent = 0;
-                
-                team.objArr.map((player,i) => {
-                    team.totalSpent += player.longFee;
-                })
-
-               
-            });
-
-            teamsData = teamsData.sort((a, b) => b.totalSpent - a.totalSpent);
-            console.log(teamsData);
-
-
-           function formatAbbreviation(x) {
-              var v = Math.abs(x);
-              return (v >= .9995e9 ? formatBillion
-                  : v >= .9995e6 ? formatMillion
-                  : formatThousand)(x);
-            } 
+            
+            
+            
+            setBarChartData(data);
+        
 
             function featureTest(property, value, noPrefixes) {
                 var prop = property + ':',
@@ -418,6 +410,240 @@ const elHeight = height;
 
  })
 
+function formatAbbreviation(x) {
+              var v = Math.abs(x);
+              return (v >= .9995e9 ? formatBillion
+                  : v >= .9995e6 ? formatMillion
+                  : formatThousand)(x);
+            } 
+
+function setBarChartData(data){
+
+            // var sellData = data.filter(function(transfer) {
+            //     return transfer.selectLeagueSale = true;
+            // });
+
+            var sellData = data.filter(transfer => transfer.selectLeagueSale);
+  
+            sellData = groupBy(sellData, 'What was the previous club?');
+
+            sellData = sortByKeys(sellData);
+           
+            sellData.forEach((team) => {
+                team.totalSell = 0;          
+                team.objArr.map((player,i) => {
+                    team.totalSell += player.longFee;
+                })               
+            });
+
+            sellData = sellData.sort((a, b) => b.totalSell - a.totalSell);
+
+            sellData.forEach((team,i) => {
+                team.sellRank = i+1;
+                //if(team.sortOn == "Monaco"){ console.log(team); } 
+            });
+
+            
+            // var buyData = data.filter(function(transfer) {
+            //     return transfer.selectLeagueBuy = true;
+            // });
+
+            var buyData = data.filter(transfer => transfer.selectLeagueBuy);
+
+            buyData = groupBy(buyData, 'What is the new club?');
+
+            buyData = sortByKeys(buyData);
+           
+            buyData.forEach((team) => {
+                team.totalSpent = 0;               
+                team.objArr.map((player,i) => {
+                    team.totalSpent += player.longFee;   
+                })
+            });
+
+            buyData = buyData.sort((a, b) => b.totalSpent - a.totalSpent);
+
+            buyData.forEach((team,i) => { 
+                team.buyRank = i+1; 
+            });
+
+
+            var allTransferData = [];
+
+            allTransferData = buyData;
+
+            allTransferData.forEach((team,i) => { 
+                team.playersIn = team.objArr;
+
+                 sellData.forEach((sellTeam) => {
+                    if(sellTeam.sortOn === team.sortOn){
+                        team.playersOut = sellTeam.objArr;
+                        team.totalSell = sellTeam.totalSell;
+                        team.sellRank = sellTeam.sellRank; 
+                    }
+                 })
+
+                 team.transferBalance = team.totalSell - team.totalSpent;
+
+                 if(isNaN(team.transferBalance)){ team.transferBalance = 0 }
+
+            });          
+
+            allTransferData = allTransferData.sort((a, b) => b.transferBalance - a.transferBalance);
+
+            allTransferData.forEach((team,i) => { 
+                team.balanceRank = i+1;
+            })
+
+
+            var topTenBuy = [], topTenBalance = [], topTenSell = [];
+
+            allTransferData.forEach((team,i) => { 
+                    if(team.balanceRank < 11){ topTenBalance.push(team)}
+                    if(team.sellRank < 11){ topTenSell.push(team)}
+                    if(team.buyRank < 11){ topTenBuy.push(team)}
+            })
+
+
+            balanceChartView(topTenBalance)
+
+            //topTenBuy,, topTenSell , "remove non relevant leagues"
+
+}
+
+
+function balanceChartView(data){
+
+    data.map((team,i) => {
+        team.tickLabel = team.sortOn;
+        if (team.sortOn == "Borussia Dortmund"){
+            team.tickLabel = "B Dortmund";
+        }
+        if (team.sortOn == "Bayer Leverkusen"){
+            team.tickLabel = "B Leverkusen";
+        }
+    })
+
+
+    var chartHeight = 380;
+
+    var barChartMargin = {top: 40, right: 0 , bottom: 80, left: 80}
+
+    var x = d3.scaleLinear().range([0, width - barChartMargin.left]);
+
+    var y = d3.scaleBand().range([0, chartHeight]).padding(0.5);
+
+    x.domain([0, d3.max(data, function(d) { return d.totalSell })]);
+    y.domain(data.map(function(d) { return d.tickLabel; }));
+    
+    var svg = d3.select("#interactive-slot-balance").append("svg")
+        .attr("width", width + chartMargin.left + chartMargin.right)
+        .attr("height", chartHeight + chartMargin.top + chartMargin.bottom)
+      .append("g")
+        //.attr("transform", "translate(" + chartMargin.left + "," + chartMargin.top + ")"); 
+
+    const xAxis = d3.axisBottom(x)
+        .tickSize(chartHeight).ticks(4).tickFormat(formatAbbreviation);
+
+    const yAxis = d3.axisLeft(y)
+        .tickSize(0);
+
+    var barHolder = svg.append("g").classed("bar-holder", true)
+        .style("transform", "translateX(" + barChartMargin.left + "px)")
+
+    barHolder.append("g").classed("bar-x-axis", true)
+      //.attr("transform", "translate(0," + chartHeight + ")")
+      .call(xAxis); 
+
+    barHolder.append("g").classed("bar-y-axis", true)
+      .call(yAxis).selectAll("tick");
+
+    barHolder.selectAll(".buybar")
+      .data(data)
+    .enter().append("rect")
+      .attr("class", "buybar")
+      .attr("x", 0 )
+      .attr("width",  function(d) { console.log(d); return x(d.totalSpent); })
+      .attr("y", function(d) { return y(d.tickLabel); })
+      .attr("fill","#CB0911")
+      .attr("height", y.bandwidth()/2)
+    
+    barHolder.selectAll(".sellbar")
+      .data(data)
+    .enter().append("rect")
+      .attr("class", "sellbar")
+      .attr("x", 0 )
+      .attr("width",  function(d) { return x(d.totalSell); })
+      .attr("y", function(d) { return y(d.tickLabel) + y.bandwidth()/2; })
+      .attr("fill","#222")
+      .attr("height", y.bandwidth()/2);
+
+    barHolder.selectAll(".bar-x-axis .tick line").attr("stroke", "#dcdcdc").attr("stroke-width","1px");
+    barHolder.selectAll(".bar-x-axis .tick:not(:first-of-type) line").attr("stroke", "#dcdcdc").attr("stroke-width","1px").attr("stroke-dasharray", "1,1");
+
+    barHolder.selectAll(".bar-x-axis text").style("text-anchor", "start").style("font-family","'Guardian Text Sans Web',sans-serif")
+                            .style("font-size","12px")
+                            .style("font-weight", "700" )
+                            .style("fill", "#333");
+
+    barHolder.selectAll(".bar-y-axis text").attr("x", -80).attr("dy", 1).style("text-anchor", "start").style("font-family","'Guardian Text Sans Web',sans-serif")
+                            .style("font-size","12px")
+                            .style("font-weight", "700")
+                            .style("fill", "#333");
+
+    barHolder.selectAll(".bar-x-axis .tick:first-of-type text").text("0").style("text-anchor", "start");
+
+
+    barHolder.selectAll(".domain").remove();
+
+}
 
 
 
+// const xAxis = d3.axisBottom(xScale)
+//                 .tickValues([tickDates[0].startDate.getTime(), tickDates[0].endDate.getTime(), tickDates[1].startDate.getTime(), tickDates[1].endDate.getTime(), tickDates[2].startDate.getTime(), tickDates[2].endDate.getTime()]);
+
+//             const yAxis = d3.axisLeft(yScale)
+//                 .tickSize(width)
+//                 .ticks(4).tickFormat(formatAbbreviation);
+
+//             const chartGroup = svg.append("g").style("transform", "translateY(" + chartMargin.top + "px)")
+
+//             chartGroup.append("path")
+//                 .data([data])
+//                 .attr("class", "area")                                   
+//                 .style("fill", "#f6f6f6")
+//                 .attr("d", transfersArea);    
+
+//             chartGroup.append("g").classed("x-axis", true).call(xAxis).style("transform", "translateY(" + height + "px)")
+
+//             const yAxisEl = chartGroup.append("g").classed("y-axis", true); 
+
+//             yAxisEl.call(yAxis)
+
+//             chartGroup.selectAll(".domain").remove();
+//             chartGroup.selectAll(".y-axis text").attr("x", 0).attr("dy", "-4").style("text-anchor", "start").style("font-family","'Guardian Text Sans Web',sans-serif")
+//                             .style("font-size","13px")
+//                             .style("font-weight", "700" )
+//                             .style("fill", "#333");
+//             chartGroup.selectAll(".y-axis .tick:not(:first-of-type) line").attr("stroke", "#CCC").attr("stroke-width","1px").attr("stroke-dasharray", "1,2");
+//             chartGroup.selectAll(".y-axis line").attr("x", 0).attr("x2", width)
+
+//             chartGroup.select(".y-axis").append("line")
+//                 .attr("x1", 0)
+//                 .attr("x2", width)
+//                 .attr("y1", height)
+//                 .attr("y2", height)
+
+//             // chartGroup.select(".y-axis").append("line")
+//             //     .attr("x1", 0)
+//             //     .attr("x2", width)
+//             //     .attr("y1", 0)
+//             //     .attr("y2", 0)
+//             //     .classed("target-line", true)
+
+//             chartGroup.selectAll(".x-axis .tick text")
+//                 .text("").style("font-family","'Guardian Text Sans Web',sans-serif")
+//                             .style("font-size","13px")
+//                             .style("font-weight", "700" )
+//                             .style("fill", "#333")
