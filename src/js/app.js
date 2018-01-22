@@ -150,9 +150,8 @@ const maxSumFee = 300000000; //300m
         const wrapper = interactiveChartEl.append("div")
                 .classed("line-wrapper", true);   
 
-        wrapper.append("h3")
-                .html("Chart title here")
-                .classed("line-header", true);
+        wrapper.append("h2")
+                .html("Spending build up 2016-17");
 
         const textWrapper = wrapper.append("div")
                 .classed("chart-text",true) 
