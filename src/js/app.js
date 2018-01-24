@@ -18,7 +18,7 @@ import {groupBy, sortByKeys, shuffle, compareValues, changeFirstObj, dedupe } fr
 
 const d3 = Object.assign({}, d3Scale, d3Array, d3Axis, d3Collection, d3Format, d3Scale, d3Select, d3Shape, d3Transition, d3Request, d3Time);
 
-const palette = { gu_sport: "#00b2ff", gu_sport_kicker: "#056da1", gu_sport_headline: "#1896d7", gu_sport_background: "#e6f5ff", dark_neutral: "#333"}
+const palette = { gu_sport: "#00b2ff", gu_sport_kicker: "#056da1", gu_sport_headline: "#1896d7", gu_sport_background: "#e6f5ff", dark_neutral: "#333", light_neutral: "#EFEFEF"}
 
 const formatNumber = d3.format(".0f"),
     formatBillion = function(x) { return formatNumber(x / 1e9) + "bn"; },
@@ -28,7 +28,7 @@ const formatNumber = d3.format(".0f"),
 
 const selectedLeagues = ["Premier League","La Liga","Ligue 1","Serie A","Bundesliga"];
 
-const tickDates = [ {startDate:  new Date("Dec 20 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Feb 20 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Oct 20 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
+const tickDates = [ {startDate:  new Date("Dec 20 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Jan 31 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Oct 20 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
 const windowClosureDates = [ {startDate: new Date("Feb 1 2017 00:01:00 GMT (GMT)"), endDate: new Date("May 14 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("Sep 1 2017 00:01:00 GMT+0100 (BST)"), endDate:  new Date("Dec 14 2017 23:59:00 GMT (GMT)")} ];
 
 let prevScroll = 0;
@@ -193,7 +193,7 @@ const maxSumFee = 300000000; //300m
             //     .y(d => yScale(d.totalSpendAfterDeal))
             //     .curve(d3.curveStepAfter)
 
-            const xAxis = d3.axisBottom(xScale)
+            const xAxis = d3.axisBottom(xScale).tickSize(0)
                 .tickValues([tickDates[0].startDate.getTime(), tickDates[0].endDate.getTime(), tickDates[1].startDate.getTime(), tickDates[1].endDate.getTime(), tickDates[2].startDate.getTime(), tickDates[2].endDate.getTime()]);
 
             const yAxis = d3.axisLeft(yScale)
@@ -220,35 +220,46 @@ const maxSumFee = 300000000; //300m
                             .style("font-weight", "700" )
                             .style("fill", "#333");
             chartGroup.selectAll(".y-axis .tick:not(:first-of-type) line").attr("stroke", "#dcdcdc").attr("stroke-width","1px").attr("stroke-dasharray", "1,1");
-            chartGroup.selectAll(".y-axis line").attr("x", 0).attr("x2", width)
+            chartGroup.selectAll(".y-axis line").attr("x", 0).attr("x2", width);
 
             chartGroup.select(".y-axis").append("line")
                 .attr("x1", 0)
                 .attr("x2", width)
                 .attr("y1", height)
-                .attr("y2", height)
+                .attr("y2", height);
 
-            // chartGroup.select(".y-axis").append("line")
-            //     .attr("x1", 0)
-            //     .attr("x2", width)
-            //     .attr("y1", 0)
-            //     .attr("y2", 0)
-            //     .classed("target-line", true)
+            chartGroup.select(".y-axis").append("line")
+                .attr("class", "closedBar")
+                .attr("x1", xScale(tickDates[0].endDate.getTime()))
+                .attr("x2", xScale(tickDates[0].endDate.getTime()))
+                .attr("y1", -6)
+                .attr("y2", height+18)
+                .attr("stroke",  "1px" );
+
+            chartGroup.select(".y-axis").append("line")
+                .attr("class", "closedBar")
+                .attr("x1", xScale(tickDates[1].endDate.getTime()))
+                .attr("x2", xScale(tickDates[1].endDate.getTime()))
+                .attr("y1", -6)
+                .attr("y2", height+18)
+                //.attr("stroke-dasharray", "10,10");
 
             chartGroup.selectAll(".x-axis .tick text")
                 .text("").style("font-family","'Guardian Text Sans Web',sans-serif")
                             .style("font-size","13px")
                             .style("font-weight", "700" )
+                            .attr("dy","15px")
+                            .attr("dx","6px")
                             .style("fill", "#333")
 
             chartGroup.selectAll(".x-axis .tick:first-of-type text")
-                .text("Jan 2016").style("text-anchor", "start");
+                .text("1 January 2016").style("text-anchor", "start");
 
             chartGroup.selectAll(".x-axis .tick:nth-child(3) text")
                 .text("Summer 2017").style("text-anchor", "start");
 
             chartGroup.selectAll(".x-axis .tick:nth-child(5) text")
-                .text("Jan 2017").style("text-anchor", "start");
+                .text("1 January 2017").style("text-anchor", "start");
 
             chartGroup.selectAll(".y-axis .tick:first-of-type")
                 .style("display", "none"); 
@@ -324,11 +335,43 @@ const maxSumFee = 300000000; //300m
                     }
             });
 
+            
+              
+            
+              //.attr("y", "-1px" })
+              //.attr("fill", palette.light_neutral)
+              //.attr("height", height-1)
+
+            //   chartGroup.append("text")
+            //     .text("window closed")
+            //     .attr("x", xScale(tickDates[0].endDate.getTime()) + 5+"px" )
+            //     .style("font-family","'Guardian Text Sans Web',sans-serif")
+            //     .style("font-size","12px")
+            //     .style("font-weight", "400" )
+            //     .style("fill", "#AAA")
+
+            // chartGroup.append("rect")
+            //   .attr("class", "closedBar")
+            //   .attr("x", xScale(tickDates[1].endDate.getTime())-30+"px" )
+            //   .attr("width",  "30px" )
+            //   //.attr("y", "-1px" })
+            //   .attr("fill", palette.light_neutral)
+            //   .attr("height", height-1)
+
+            //   chartGroup.append("text")
+            //     .text("window closed")
+            //     .attr("x", xScale(tickDates[1].endDate.getTime()) + 5+"px" )
+            //     .style("font-family","'Guardian Text Sans Web',sans-serif")
+            //     .style("font-size","12px")
+            //     .style("font-weight", "400" )
+            //     .style("fill", "#AAA")
 
             
-            
-            
             setBarChartData(data);
+
+            var twoWeeks = 1000 * 60 * 60 * 24 * 14;
+
+            console.log( xScale(tickDates[0].endDate.getTime()+1209600000),  xScale(tickDates[0].endDate.getTime()) )
         
 
             function featureTest(property, value, noPrefixes) {
@@ -554,7 +597,6 @@ function stackedBarView(data, tgtSlot){
         if (team.sortOn == "Crystal Palace"){
             team.tickLabel = "C Palace";
         }
-
 
     })
 
