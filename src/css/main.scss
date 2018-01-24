@@ -1,6 +1,14 @@
 @import "mq";
 @import "fonts";
 
+
+$gu_sport: "#00b2ff";
+$gu_sport_kicker: "#056da1";
+$gu_sport_headline: "#1896d7";
+$gu_sport_background: "#e6f5ff";
+$dark_neutral: "#333";
+$light_neutral: "#EFEFEF";
+
 // Uncomment for embeds
 //@import "embed";
 
@@ -18,6 +26,18 @@
         line-height: 24px;
         padding-bottom:6px;
     }
+
+    p, h2{
+        max-width:620px;
+
+        @include mq(leftCol){
+            margin-left:160px;
+        }
+
+        @include mq(wide){
+            margin-left:240px;
+        }
+    }
 }
 
 
@@ -30,11 +50,15 @@
     padding-bottom: 2px;
     margin-bottom: 6px;
 }
+.area-slice{
 
+}
 
 .gv-inner-slice{
     width: 100%;
     max-width:620px;
+
+
 
     @include mq(leftCol) {
                 margin-left: 160px;
@@ -42,12 +66,16 @@
     @include mq(wide) {
         margin-left: 240px;
     }
+
+    
 }
 
 .gv-slice-chart-container{
     position: relative;
     z-index: 100;
     width:100%;
+    overflow: hidden;
+
 }
 
 #sticky { 
@@ -56,6 +84,7 @@
       left: 0; 
       width: 100%; 
       z-index: 50;
+      height: 60vh !important; // display: block;
 }
 
 .panel {
@@ -63,31 +92,39 @@
       padding-left: 20px;
       padding-top: 25vh;
       padding-bottom: 25vh;
-    }
-    .panel p {
-      padding-right: 50%;
-    }
-    .panel:first-child {
-      padding-top: 35vh;
-    }
-    .panel:last-child {
-      padding-bottom: 45vh;
-    }
+}
+
+.panel p {
+  padding-right: 50%;
+}
+.panel:first-child {
+  padding-top: 35vh;
+}
+.panel:last-child {
+  padding-bottom: 45vh;
+}
 
 
 
 .interactive-chart {
-    //height: 400vh;
+    height: 400vh;
     position: relative;
-
-    margin-bottom: 30px;
+    margin-bottom: 60px;
 
     svg {
         position: -webkit-sticky;
         position: sticky;
         top: 0;
         overflow: visible;
-        //height: 100vh; // display: block;
+        height:90vh;
+        
+        .country-label {
+            fill: #333; // font-weight: bld
+            @include fs-textSans(1);
+            @include mq(tablet) {
+                @include fs-textSans(2);
+            }
+        }
     }
 
     svg line{
@@ -96,6 +133,10 @@
 
     .x-axis path, .x-axis line, .y-axis path, .y-axis line {
         stroke: #CCC !important;
+
+        &.closedBar{
+            stroke: #FFF !important;
+        }
 
     }
 
@@ -110,7 +151,7 @@
         width: 100%;
         top: 60px;
 
-        display:none;
+        //display:none;
 
         .text-wrapper {
             // margin-bottom: 60vh;
@@ -120,14 +161,14 @@
                 width: 620px;
             }
             @include mq(leftCol) {
-                margin-left: 160px;
+                margin-left: 60px;
             }
             @include mq(wide) {
-                margin-left: 240px;
+                margin-left: 60px;
             }
 
             p {
-                margin-left: 0 !important;
+                margin-left: 200px !important;
             }
 
             position: relative;
@@ -135,6 +176,66 @@
 
             &:last-of-type {
                 margin-top: -100px;
+            }
+        }
+
+        .img-spot:before{
+            content:'';
+            position:absolute;
+            top:0;
+            left:0;
+            width:90px;
+            height:90px;
+            margin:15px;
+            background-color:#00b2ff;
+            border-radius: 90px;
+              z-index: -1;
+        }
+        .img-spot{
+            width:180px;
+            height:180px;
+            position:absolute;
+            background-repeat: no-repeat;
+            background-size: contain;
+        }
+        .factbox{
+            display: block;
+            width: 240px;
+            background-color: #FFF;
+            padding: 6px;
+            margin:50px 0 0 120px;
+
+            .factname{
+                font-family: "Guardian Egyptian Web", Georgia, serif;
+                font-weight: 900;
+                font-size: 18px;
+                line-height: 18px;
+                padding-bottom:6px;
+                width:240px;
+            }
+
+            .factfee{
+                font-family: "Guardian Egyptian Web", Georgia, serif;
+                font-weight: 400;
+                font-size: 18px;
+                line-height: 18px;
+                padding-bottom:6px;
+                width:240px;
+               
+            }
+
+            .factline{
+                font-family: "Guardian Egyptian Web", Georgia, serif;
+                font-weight: 400;
+                font-size: 18px;
+                line-height: 18px;
+                padding-bottom:6px;
+                width:240px;
+                
+            }
+
+            .factname, .factline, .factfee{
+                display: inline-block;
             }
         }
 
@@ -168,6 +269,8 @@
                 bottom: 10vh;
             }
         }
+
+        
     }
     
 }

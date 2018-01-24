@@ -27,7 +27,8 @@ const formatNumber = d3.format(".0f"),
 };
 
 const selectedLeagues = ["Premier League","La Liga","Ligue 1","Serie A","Bundesliga"];
-
+const tickTextLabelsLong = ["1 January 2016","Summer 2017","1 January 2017"];
+const tickTextLabelsShort = ["1 Jan 2016","Summer 2017","1 Jan 2017"];
 const tickDates = [ {startDate:  new Date("Dec 20 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Jan 31 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Oct 20 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
 const windowClosureDates = [ {startDate: new Date("Feb 1 2017 00:01:00 GMT (GMT)"), endDate: new Date("May 14 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("Sep 1 2017 00:01:00 GMT+0100 (BST)"), endDate:  new Date("Dec 14 2017 23:59:00 GMT (GMT)")} ];
 
@@ -35,7 +36,9 @@ let prevScroll = 0;
 let prevCutOff = 0;
 let prevScrollDepth = 0;
 
-const interactiveChartEl = d3.select("#sticky").classed("interactive-chart", true);
+const interactiveChartEl = document.querySelector(".interactive-chart");
+
+const svgContainerEl = d3.select(interactiveChartEl);
 
 const screenWidth = window.innerWidth;
 const isMobile = screenWidth < 740;
@@ -45,15 +48,21 @@ const isAndroid = document.body.classList.contains("android");
 
 const isApp = isiOS || isAndroid;
 
-const clientWidth = interactiveChartEl.node().clientWidth;
-const width = clientWidth;
-const chartWidth = clientWidth < 620 ? clientWidth : 620;
-const height = clientWidth < 620 ? 450 : 520;
+const width = svgContainerEl.node().clientWidth;
+const svgEl = interactiveChartEl.querySelector("svg");
+const svgClientRect = svgEl.getBoundingClientRect();
+
+const chartWidth = width;
+const height = (!isiOS) ? svgClientRect.height - 36 : svgClientRect.height - 108;
 const chartMargin = {top: 20, bottom: 20, right:10, left: 10}
-const bigDealThreshold = clientWidth < 620 ? 59999999 : 39999999;
-const elHeight = height;
+const bigDealThreshold = chartWidth < 620 ? 49999999 : 49999999;
+
+const tickTextLabels = chartWidth < 620 ? tickTextLabelsShort : tickTextLabelsLong;
 
 const maxSumFee = 300000000; //300m
+
+
+console.log(height, width, "wh")
 
 
  Promise.all([
@@ -149,33 +158,34 @@ const maxSumFee = 300000000; //300m
             .range([height - chartMargin.top - chartMargin.bottom, 0])
             .clamp(true);
 
-        const wrapper = interactiveChartEl.append("div")
-                .classed("line-wrapper", true);   
+        // const wrapper = interactiveChartEl.append("div")
+        //         .classed("line-wrapper", true);   
 
-        const textWrapper = wrapper.append("div")
-                .classed("chart-text",true) 
+        // const textWrapper = wrapper.append("div")
+        //         .classed("chart-text",true) 
                 
-        textWrapper.append("div")
-                .html("<div class='p-wrapper'><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p></div>")
-                .classed("text-wrapper", true);        
-        textWrapper.append("div")
-                .html("<div class='p-wrapper'><p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. </p></div>")
-                .classed("text-wrapper", true);      
-        textWrapper.append("div")
-                .html("<div class='p-wrapper'><p>Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.</p></div>")
-                .classed("text-wrapper", true);      
-        textWrapper.append("div")
-                .html("<div class='p-wrapper'><p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio.</p></div>")
-                .classed("text-wrapper", true);      
+        // textWrapper.append("div")
+        //         .html("<div class='p-wrapper'><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p></div>")
+        //         .classed("text-wrapper", true);        
+        // textWrapper.append("div")
+        //         .html("<div class='p-wrapper'><p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. </p></div>")
+        //         .classed("text-wrapper", true);      
+        // textWrapper.append("div")
+        //         .html("<div class='p-wrapper'><p>Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.</p></div>")
+        //         .classed("text-wrapper", true);      
+        // textWrapper.append("div")
+        //         .html("<div class='p-wrapper'><p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio.</p></div>")
+        //         .classed("text-wrapper", true);      
 
 
-            const svg = wrapper
-                .append("svg")
-                .attr("height", height + chartMargin.bottom + chartMargin.top  )
-                .attr("width", width)
-                .classed("line-chart", true); 
+        //const svg = svgEl
+                // .attr("height", height + chartMargin.bottom + chartMargin.top  )
+                // .attr("width", width)
+                // .classed("line-chart", true); 
 
-            const svgEl = svg;
+
+
+            const svgContainerEl = d3.select(".interactive-chart svg"); 
 
             const transfersLine = d3.line()
                 .x(d => xScale(d.utcStamp))
@@ -200,7 +210,7 @@ const maxSumFee = 300000000; //300m
                 .tickSize(width)
                 .ticks(4).tickFormat(formatAbbreviation);
 
-            const chartGroup = svg.append("g").style("transform", "translateY(" + chartMargin.top + "px)")
+            const chartGroup = svgContainerEl.append("g").style("transform", "translateY(" + chartMargin.top + "px)")
 
             chartGroup.append("path")
                 .data([data])
@@ -242,6 +252,7 @@ const maxSumFee = 300000000; //300m
                 .attr("x2", xScale(tickDates[1].endDate.getTime()))
                 .attr("y1", -6)
                 .attr("y2", height+18)
+                .attr("stroke","#FFF")
                 //.attr("stroke-dasharray", "10,10");
 
             chartGroup.selectAll(".x-axis .tick text")
@@ -253,13 +264,13 @@ const maxSumFee = 300000000; //300m
                             .style("fill", "#333")
 
             chartGroup.selectAll(".x-axis .tick:first-of-type text")
-                .text("1 January 2016").style("text-anchor", "start");
+                .text(tickTextLabels[0]).style("text-anchor", "start");
 
             chartGroup.selectAll(".x-axis .tick:nth-child(3) text")
-                .text("Summer 2017").style("text-anchor", "start");
+                .text(tickTextLabels[1]).style("text-anchor", "start");
 
             chartGroup.selectAll(".x-axis .tick:nth-child(5) text")
-                .text("1 January 2017").style("text-anchor", "start");
+                .text(tickTextLabels[2]).style("text-anchor", "start");
 
             chartGroup.selectAll(".y-axis .tick:first-of-type")
                 .style("display", "none"); 
@@ -272,7 +283,7 @@ const maxSumFee = 300000000; //300m
             //     .attr("id","transferLine")
             //     .attr("d", transfersLine); 
             
-            var mask = svg.append("defs")
+            var mask = svgContainerEl.append("defs")
                  .append("mask")
                  .attr("id", "dashMaskLine");
 
@@ -281,12 +292,12 @@ const maxSumFee = 300000000; //300m
                 .attr("id", "transferMaskLine")
                 .attr("d", transfersLine)
                 .style("stroke", "white")
-                .style("stroke-width", "3px");  
+                .style("stroke-width", "5px");  
 
             const transfersLineElDashed = chartGroup.append("path")
                 .data([data])
                 .style("stroke", palette.gu_sport)
-                .style("stroke-width", "1px")
+                .style("stroke-width", "1.5px")
                 .style("fill", "none")
                 .attr("id", "transfersLineDashed")
                 .attr("d", transfersLine)
@@ -395,36 +406,51 @@ const maxSumFee = 300000000; //300m
                 return winStr;
             }
 
+
             checkScroll(); 
             
             window.addEventListener("scroll", checkScroll);
 
             function checkScroll(){
 
-                console.log("scroll check")
-                let targetChartEl = document.querySelector(".interactive-chart");
-                const scroll = window.pageYOffset;
 
+               const svgH = svgClientRect.height - 108;
+
+                
+                
+                const targetChartEl = document.querySelector(".gv-inner-slice-chart-container");
+
+                console.log(targetChartEl);
+                const scroll = window.pageYOffset;
+                const elHeight = targetChartEl.getBoundingClientRect().height;
+
+                
+                
                 if (scroll !== prevScroll) {
                     const elOffset = targetChartEl.getBoundingClientRect().top + scroll;
 
-                    if (!featureTest('position', 'sticky') && !featureTest('position', '-webkit-sticky')) {
+                    console.log("scroll check", scroll, prevScroll, elOffset, elHeight)
+
+                   // if (!featureTest('position', 'sticky') && !featureTest('position', '-webkit-sticky')) {
                         const offset = targetChartEl.getBoundingClientRect().top + scroll;
                         
                             if (offset + elHeight - window.innerHeight <= scroll) {
-                                svgEl.style.position = "absolute";
-                                svgEl.style.bottom = "0px";
-                                svgEl.style.top = "auto";
+                                console.log("abs")
+                                targetChartEl.style.position = "absolute";
+                                targetChartEl.style.bottom = "0px";
+                                targetChartEl.style.top = "auto";
                             } else if (offset <= scroll) {
-                                svgEl.style.position = "fixed";
-                                svgEl.style.bottom = "";
-                                svgEl.style.top = "";
+                                console.log("fx")
+                                targetChartEl.style.position = "fixed";
+                                targetChartEl.style.bottom = "";
+                                targetChartEl.style.top = "";
                             } else {
-                                svgEl.style.position = "";
+                                targetChartEl.style.position = "";
+
                             }
 
                             console.log(scroll, offset);
-                        }
+                        //}
 
                         prevScroll = scroll;
 
@@ -437,10 +463,14 @@ const maxSumFee = 300000000; //300m
             }
 
             function doScrollEvent() {
+                
+
                   const maskedLine = document.getElementById("transfersLineDashed");
                   const mask =  document.getElementById("transferMaskLine");
                   var length = maskedLine.getTotalLength();   
                   var scrollpercent = (document.body.scrollTop + document.documentElement.scrollTop) / (document.documentElement.scrollHeight - document.documentElement.clientHeight);
+
+                  console.log(scrollpercent)
                   // Length to offset the dashes
                   var draw = length * scrollpercent;
                   // Reverse the drawing (when scrolling upwards)
@@ -601,25 +631,27 @@ function stackedBarView(data, tgtSlot){
     })
 
 
-    var chartHeight = 380;
+    var barChartHeight = 380;
+
+    const barChartWidth = chartWidth < 620 ? chartWidth : 620;
 
     var barChartMargin = {top: 40, right: 0 , bottom: 80, left: 80}
 
-    var x = d3.scaleLinear().range([0, chartWidth - barChartMargin.left]);
+    var x = d3.scaleLinear().range([0, barChartWidth - barChartMargin.left]);
 
-    var y = d3.scaleBand().range([0, chartHeight]).padding(0.5);
+    var y = d3.scaleBand().range([0, barChartHeight]).padding(0.5);
 
     x.domain([0, d3.max(data, function(d) { return d.totalSell })]);
     y.domain(data.map(function(d) { return d.tickLabel; }));
     
     var svg = d3.select(tgtSlot).append("svg")
-        .attr("width", chartWidth )
-        .attr("height", chartHeight + chartMargin.top + chartMargin.bottom)
+        .attr("width", barChartWidth )
+        .attr("height", barChartHeight + chartMargin.top + chartMargin.bottom)
       .append("g")
         //.attr("transform", "translate(" + chartMargin.left + "," + chartMargin.top + ")"); 
 
     const xAxis = d3.axisBottom(x)
-        .tickSize(chartHeight).ticks(4).tickFormat(formatAbbreviation);
+        .tickSize(barChartHeight).ticks(4).tickFormat(formatAbbreviation);
 
     const yAxis = d3.axisLeft(y)
         .tickSize(0);
@@ -628,7 +660,7 @@ function stackedBarView(data, tgtSlot){
         .style("transform", "translateX(" + barChartMargin.left + "px)")
 
     barHolder.append("g").classed("bar-x-axis", true)
-      //.attr("transform", "translate(0," + chartHeight + ")")
+      //.attr("transform", "translate(0," + barChartHeight + ")")
       .call(xAxis); 
 
     barHolder.append("g").classed("bar-y-axis", true)
