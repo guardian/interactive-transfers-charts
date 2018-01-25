@@ -252,8 +252,7 @@ console.log(height, width, "wh")
                 .attr("x2", xScale(tickDates[1].endDate.getTime()))
                 .attr("y1", -6)
                 .attr("y2", height+18)
-                .attr("stroke","#FFF")
-                //.attr("stroke-dasharray", "10,10");
+                .attr("stroke","#FFF");
 
             chartGroup.selectAll(".x-axis .tick text")
                 .text("").style("font-family","'Guardian Text Sans Web',sans-serif")
@@ -310,7 +309,6 @@ console.log(height, width, "wh")
 
             console.log("lineLength",lineLength)
             
-
             data.forEach((d) => {
                     if (d.bigDeal) {
                         chartGroup.append("text")
@@ -430,9 +428,9 @@ function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveCha
             prevScroll = scroll;
 
             const scrollToUse = scroll - elOffset;
-            const scrollDepth = 1.1*(scrollToUse / (elHeight - height));
+            const scrollDepth = 1.1 * (scrollToUse / (elHeight - height));
 
-            console.log("scrollToUse",scrollToUse, scrollDepth)
+            console.log("scrollDepth", scrollDepth)
 
             doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl);
         }
@@ -444,6 +442,8 @@ function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveCha
 
 
 function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl) {
+
+    //console.log("doing a scroll", scrollDepth, prevScrollDepth)
     if (scrollDepth < 0) {
         scrollDepth = 0
     }
@@ -456,18 +456,26 @@ function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContai
         return;
     }
 
-    // console.log(scrollDepth)
+    prevScrollDepth = scrollDepth;
 
-    const depthChange = Math.abs(scrollDepth - prevScrollDepth);
+    
+    const depthChange = Math.abs(scrollDepth - scrollDepth);
     // console.log(healthcarePopulationData)
                 //const cutOff = Math.min(165, Math.floor(healthcarePopulationData.length * scrollDepth));
     // console.log(healthcarePopulationData.length, cutOff)
-    // console.log(cutOff, Math.floor(healthcarePopulationData.length * scrollDepth))
+    // console.log(cutOff, Math.floor(healthcarePopulationData.length * scrollDepth));
 
- 
+    console.log("doing a scroll", scrollDepth, depthChange)
+
+    // Reverse the drawing (when scrolling upwards)
+
+
+    var draw = lineLength * scrollDepth;
 
     transfersLineElDashed
-        .transition().duration(2500 * depthChange).style("stroke-dashoffset", lineLength - (lineLength * scrollDepth))
+        .transition().duration(2500 * depthChange).style("stroke-dashoffset", lineLength - draw)
+        console.log("look here",lineLength - draw)
+    //transfersLineElDashed.style.strokeDashoffset = lineLength - (lineLength * scrollDepth);
 
     // .transition().duration(2500 * depthChange).style("stroke-dashoffset", lineLength - (lineLength * scrollDepth))
 
@@ -530,7 +538,7 @@ function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContai
         //     }
         // }
 
-    prevScrollDepth = scrollDepth;
+    
     //prevCutOff = cutOff;
 }
 
@@ -669,8 +677,6 @@ function setBarChartData(data){
 
 
 function stackedBarView(data, tgtSlot){
-
-    // data = data.reverse();
 
     data.map((team,i) => {
         team.tickLabel = team.sortOn;
