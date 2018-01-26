@@ -67,10 +67,6 @@ const tickTextLabels = chartWidth < 620 ? tickTextLabelsShort : tickTextLabelsLo
 const maxSumFee = 300000000; //300m
 
 
-console.log(height, width, "wh")
-
-
-
  Promise.all([
         loadJson(process.env.PATH + "/assets/data/transfers.json")
     ])
@@ -135,11 +131,13 @@ console.log(height, width, "wh")
                 transfer.newClub = transfer['What is the new club?'];
                 transfer.prevClub = transfer['What was the previous club?'];
                 transfer.dateVal = {day: transfer.dateStamp.getDay() , month: monthStrings[transfer.dateStamp.getMonth()],  year: transfer.dateStamp.getFullYear()}
+                transfer.imgPath = process.env.PATH+'/assets/cutouts/'+transfer.refNum+'.png';
+                //
+                //var jsPath = process.env.PATH;
                 parasObj.objArr.push(transfer);
             }
 	    })
         
-        console.log(parasObj);
     
 
         var paraHTML = addParas(parasObj);
@@ -220,11 +218,6 @@ console.log(height, width, "wh")
                 .y0(height)
                 .y1(d => yScale(d.totalSpendAfterDeal))
                 .curve(d3.curveStepAfter);
-
-            // const transfersLine = d3.line()
-            //     .x(function(d) {console.log(d, "log"); return xScale(d.utcStamp)})
-            //     .y(d => yScale(d.totalSpendAfterDeal))
-            //     .curve(d3.curveStepAfter)
 
             const xAxis = d3.axisBottom(xScale).tickSize(0)
                 .tickValues([tickDates[0].startDate.getTime(), tickDates[0].endDate.getTime(), tickDates[1].startDate.getTime(), tickDates[1].endDate.getTime(), tickDates[2].startDate.getTime(), tickDates[2].endDate.getTime()]);
@@ -338,7 +331,7 @@ console.log(height, width, "wh")
                             .text(d.playerName)
                             .attr("x", xScale(d.utcStamp))
                             .attr("y", yScale(d.totalSpendAfterDeal))
-                            .classed("country-label", true)
+                            .classed("country-label hidden", true)
                             .style("text-anchor", "end")
                             .attr("dy", d.playerName === "Benjamin Mendy" ? -3 : 3 )
                             .attr("dx", -8)
@@ -361,7 +354,7 @@ console.log(height, width, "wh")
                             .transition()
                             .duration(250)
                             .attr("r", 3)
-                            .attr("class","chart-hl-circle")
+                            .attr("class","chart-hl-circle hidden")
                             .attr("id", "circ_"+d.refNum)
                     }
             });
@@ -398,14 +391,11 @@ console.log(height, width, "wh")
             //     .style("fill", "#AAA")
 
             
-            setBarChartData(data);
+           setBarChartData(data);
 
             var twoWeeks = 1000 * 60 * 60 * 24 * 14;
 
-            console.log( xScale(tickDates[0].endDate.getTime()+1209600000),  xScale(tickDates[0].endDate.getTime()) )
-        
-
-            
+       
 
             function getTransferWindow(dateIn){
                 var winStr;
@@ -415,31 +405,32 @@ console.log(height, width, "wh")
                 return winStr;
             }
 
-            //console.log(lineLength);
-
             transfersLineElDashed
                 .style("stroke-dasharray", lineLength)
                 .style("stroke-dashoffset", lineLength);
             
             checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl);
+          
 
  })
+
 
 function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl) {
      //console.log(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svg, svgContainerEl, prevScroll)
 
     window.requestAnimationFrame(() => {
         const scroll = window.pageYOffset;
-        if (scroll !== prevScroll) {
-            const elOffset = interactiveChartEl.getBoundingClientRect().top + scroll;
-            if (!featureTest('position', 'sticky') && !featureTest('position', '-webkit-sticky')) {
-                const offset = interactiveChartEl.getBoundingClientRect().top + scroll;
 
-                if (offset + elHeight - window.innerHeight <= scroll) {
+        if (!isApp && scroll !== prevScroll) {
+            var elOffset = interactiveChartEl.getBoundingClientRect().top + scroll;
+            if (!featureTest('position', 'sticky') && !featureTest('position', '-webkit-sticky')) {
+                var scrollOffset = interactiveChartEl.getBoundingClientRect().top + scroll;
+
+                if (scrollOffset + elHeight - window.innerHeight <= scroll) {
                     svgEl.style.position = "absolute";
                     svgEl.style.bottom = "0px";
                     svgEl.style.top = "auto";
-                } else if (offset <= scroll) {
+                } else if (scrollOffset <= scroll) {
                     svgEl.style.position = "fixed";
                     svgEl.style.bottom = "";
                     svgEl.style.top = "";
@@ -450,10 +441,35 @@ function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveCha
 
             prevScroll = scroll;
 
-            const scrollToUse = scroll - elOffset;
-            const scrollDepth = 1.1 * (scrollToUse / (elHeight - height));
+            var scrollToUse = scroll - elOffset;
+            var scrollDepth = 1.1 * (scrollToUse / (elHeight - height));
 
-            console.log("scrollDepth", scrollDepth)
+            doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl);
+        }
+
+        if (isApp && scroll !== prevScroll) {
+            var elOffset = interactiveChartEl.getBoundingClientRect().top + scroll; 
+            var scrollOffset = interactiveChartEl.getBoundingClientRect().top + scroll;
+
+                if (scrollOffset + elHeight - window.innerHeight <= scroll) {
+                    svgEl.style.position = "absolute";
+                    svgEl.style.bottom = "0px";
+                    svgEl.style.top = "auto";
+                } else if (scrollOffset <= scroll) {
+                    svgEl.style.position = "fixed";
+                    svgEl.style.bottom = "";
+                    svgEl.style.top = !isiOS ? "" : "36px";
+                } else {
+                    svgEl.style.position = "";
+                }
+           
+
+            prevScroll = scroll;
+
+            var scrollToUse = scroll - elOffset;
+            var scrollDepth = 1.1 * (scrollToUse / (elHeight - height));
+
+            
 
             doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl);
         }
@@ -466,7 +482,6 @@ function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveCha
 
 function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl) {
 
-    //console.log("doing a scroll", scrollDepth, prevScrollDepth)
     if (scrollDepth < 0) {
         scrollDepth = 0
     }
@@ -475,95 +490,41 @@ function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContai
         scrollDepth = 1;
     }
 
-    if (scrollDepth < prevScrollDepth) {
-        return;
-    }
+    // if (scrollDepth < prevScrollDepth) {
+    //     return;
+    // }
 
+    console.log("scrollDepth", scrollDepth * lineLength)
+//checkCircles(scrollDepth * lineLength);
     prevScrollDepth = scrollDepth;
 
     
     const depthChange = Math.abs(scrollDepth - scrollDepth);
-    // console.log(healthcarePopulationData)
-                //const cutOff = Math.min(165, Math.floor(healthcarePopulationData.length * scrollDepth));
-    // console.log(healthcarePopulationData.length, cutOff)
-    // console.log(cutOff, Math.floor(healthcarePopulationData.length * scrollDepth));
 
-    console.log("doing a scroll", scrollDepth, depthChange)
+    //console.log("doing a scroll", scrollDepth, depthChange)
 
     // Reverse the drawing (when scrolling upwards)
 
 
-    var draw = lineLength * scrollDepth;
-
-    transfersLineElDashed
-        .transition().duration(2500 * depthChange).style("stroke-dashoffset", lineLength - draw)
-        console.log("look here",lineLength - draw)
-    //transfersLineElDashed.style.strokeDashoffset = lineLength - (lineLength * scrollDepth);
-
-    // .transition().duration(2500 * depthChange).style("stroke-dashoffset", lineLength - (lineLength * scrollDepth))
-
-        // if (prevCutOff !== cutOff) {
-        //     try {
-        //         const yearBoundaries = [healthcarePopulationData[prevCutOff], healthcarePopulationData[cutOff]];
-        //         const newCountriesWithHealthcare = healthcareData.filter((d) => Number(d.start) > yearBoundaries[0].year && Number(d.start) <= yearBoundaries[1].year);
-
-        //         if (newCountriesWithHealthcare.length > 0) {
-        //             newCountriesWithHealthcare.forEach((d) => {
-        //                 let stack = stackData.find((e) => e.key === d.country);
-
-        //                 if(d["mega-highlight"] === "yes") {
-        //                     svg.append("circle")
-        //                         .attr("cx", xScale(Number(d.start)))
-        //                         .attr("cy", yScale(stack[0][1]))
-        //                         .attr("r", 0)
-        //                         .style("fill", "#69d1ca")
-        //                         .style("stroke", "none")
-        //                         .classed("pulsing", true)
-        //                 }
-
-        //                 if (d.highlight === "yes") {
-        //                     svg.append("text")
-        //                         .text(d.country)
-        //                         .attr("x", xScale(Number(d.start)))
-        //                         .attr("y", yScale(stack[0][1]))
-        //                         .classed("country-label", true)
-        //                         .style("text-anchor", "end")
-        //                         .attr("dy", 3)
-        //                         .attr("dx", -8)
-        //                         .style("font-weight", (d["mega-highlight"] === "yes") ? "900" : "normal")
-        //                         .style("fill", (d["mega-highlight"] === "yes") ? "#000" : "#767676")
-
-        //                     svg.append("circle")
-        //                         .attr("cx", xScale(Number(d.start)))
-        //                         .attr("cy", yScale(stack[0][1]))
-        //                         .attr("r", 0)
-        //                         .style("stroke", "#69d1ca")
-        //                         .style("stroke-width", "1.5px")
-        //                         .style("fill", (d["mega-highlight"] === "yes") ? "#69d1ca" : "#fff")
-        //                         .transition()
-        //                         .duration(250)
-        //                         .attr("r", 4)
-        //                         .transition()
-        //                         .duration(250)
-        //                         .attr("r", 3)
-        //                 }
-
-        //                 let fullData = healthcareData.filter((a) => stack.key === a.country)[0];
-
-        //                 stack = stack.filter((a) => !(Number(fullData.start) > Number(a.data.year)));
-
-
-
-        //             });
-        //         }
-        //     } catch (err) {
-        //         console.log(err)
-        //     }
-        // }
+    var draw = scrollDepth * lineLength;
 
     
-    //prevCutOff = cutOff;
+
+    transfersLineElDashed
+        .transition().duration(2500 * depthChange).style("stroke-dashoffset", draw)
+        //console.log("look here",lineLength - draw)
+     
 }
+
+function checkCircles(draw){
+    //console.log(draw)
+}
+
+
+
+
+
+
 
 
 
@@ -676,7 +637,7 @@ function setBarChartData(data){
 
             var bottomTenBalance = tempArr.slice(0, 10);
 
-            console.log(bottomTenBalance.length, bottomTenBalance);
+            //console.log(bottomTenBalance.length, bottomTenBalance);
 
             var topTenBuy = [], topTenBalance = [], topTenSell = [];
 
@@ -808,7 +769,6 @@ function stackedBarView(data, tgtSlot){
 
 function addParas(dataIn){
 
-
     Handlebars.registerHelper('html_decoder', function(text) {
         var str = unescape(text).replace(/&amp;/g, '&');
         return str;
@@ -816,10 +776,12 @@ function addParas(dataIn){
 
     Handlebars.registerPartial({
         'paragraph': paraItem,
+
     });
 
     var content = Handlebars.compile(
         paraItem, {
+
             compat: true
         }
     );

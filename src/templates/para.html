@@ -1,14 +1,16 @@
 {{#each objArr}} 
 	<div class="text-wrapper">
 		<div class="p-wrapper">
-			<div class="img-spot" style="background-image: url('/assets/cutouts/{{{refNum}}}.png');">
+			<div class="img-spot" style="background-image: url('{{{imgPath}}}');">
 			</div>	
 			<div class="factbox">
-				<span class="factname">{{{playerName}}}</span>
 				<span class="factfee">£{{{shortFee}}}m</span>
+				<span class="factname">{{{playerName}}}</span>				
 				<span class="factline">{{{prevClub}}} to {{{newClub}}}</span>
 				<span class="factdate">{{{dateVal.day}}} {{{dateVal.month}}} {{{dateVal.year}}}</span>
 			</div>
 		</div>
 	</div>
 {{/each}} 
+
+

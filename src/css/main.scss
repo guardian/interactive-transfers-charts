@@ -110,7 +110,7 @@ $light_neutral: "#EFEFEF";
 .interactive-chart {
     height: 400vh;
     position: relative;
-    margin-bottom: 60px;
+    //margin-bottom: 60px;
 
     svg {
         position: -webkit-sticky;
@@ -200,7 +200,7 @@ $light_neutral: "#EFEFEF";
             @include mq(desktop){
                 width:360px;
                 height:360px;
-                left:-90px;
+                left:-60px;
                 top: -60px;
             }
         }
@@ -224,7 +224,7 @@ $light_neutral: "#EFEFEF";
             margin:50px 0 0 120px;
 
             @include mq(desktop){
-                margin:120px 0 0 180px;
+                margin:120px 0 0 240px;
             }
 
             .factname{
@@ -294,8 +294,12 @@ $light_neutral: "#EFEFEF";
 
         
     }
-    
+    .hidden{
+       display:none; 
+    }
 }
+
+
 
 #hidden-svg{
     display:none;
