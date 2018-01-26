@@ -506,9 +506,11 @@ function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContai
     // Reverse the drawing (when scrolling upwards)
 
 
-    var draw = scrollDepth * lineLength;
+    var draw = lineLength - (scrollDepth * lineLength);
 
-    
+    var pt = transfersLineElDashed.node().getPointAtLength(draw);
+
+    console.log(pt)
 
     transfersLineElDashed
         .transition().duration(2500 * depthChange).style("stroke-dashoffset", draw)
@@ -516,19 +518,9 @@ function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContai
      
 }
 
-function checkCircles(draw){
-    //console.log(draw)
+function checkCircles(draw){  
+    console.log(draw)
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -781,7 +773,6 @@ function addParas(dataIn){
 
     var content = Handlebars.compile(
         paraItem, {
-
             compat: true
         }
     );
