@@ -2,6 +2,8 @@ import loadJson from "../components/load-json"
 import Handlebars from 'handlebars/dist/handlebars'
 //import paraTemplate from "./src/templates/para.html!text"
 
+import paraItem from '../templates/para.html'
+
 
 import * as d3Scale from 'd3-scale'
 import * as d3Array from 'd3-array'
@@ -22,7 +24,7 @@ import {groupBy, sortByKeys, shuffle, compareValues, changeFirstObj, dedupe } fr
 const d3 = Object.assign({}, d3Scale, d3Array, d3Axis, d3Collection, d3Format, d3Scale, d3Select, d3Shape, d3Transition, d3Request, d3Time);
 
 const palette = { gu_sport: "#00b2ff", gu_sport_kicker: "#056da1", gu_sport_headline: "#1896d7", gu_sport_background: "#e6f5ff", dark_neutral: "#333", light_neutral: "#EFEFEF"}
-
+const monthStrings = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const formatNumber = d3.format(".0f"),
     formatBillion = function(x) { return formatNumber(x / 1e9) + "bn"; },
     formatMillion = function(x) { return formatNumber(x / 1e6) + "m"; },
@@ -130,11 +132,19 @@ console.log(height, width, "wh")
 
             if(transfer.longFee > bigDealThreshold){
                 transfer.bigDeal = true;
+                transfer.newClub = transfer['What is the new club?'];
+                transfer.prevClub = transfer['What was the previous club?'];
+                transfer.dateVal = {day: transfer.dateStamp.getDay() , month: monthStrings[transfer.dateStamp.getMonth()],  year: transfer.dateStamp.getFullYear()}
                 parasObj.objArr.push(transfer);
             }
 	    })
+        
+        console.log(parasObj);
+    
 
-        addParas(parasObj);
+        var paraHTML = addParas(parasObj);
+
+        document.querySelector(".chart-text").innerHTML = paraHTML;
 
         // Get an array of checkout values only
         var allFees = data.map(function(item) {
@@ -796,22 +806,28 @@ function stackedBarView(data, tgtSlot){
 
 }
 
-function addParas(d){
-    // Handlebars.registerPartial({
-    //     'paras': paraTemplate
-    // });
+function addParas(dataIn){
 
-    // var content = Handlebars.compile(
-    //     paras, {
-    //         compat: true
-    //     }
-    // );
 
-    // var newHTML = content(d);
+    Handlebars.registerHelper('html_decoder', function(text) {
+        var str = unescape(text).replace(/&amp;/g, '&');
+        return str;
+    });
 
-    // return newHTML
+    Handlebars.registerPartial({
+        'paragraph': paraItem,
+    });
 
-    console.log(d)
+    var content = Handlebars.compile(
+        paraItem, {
+            compat: true
+        }
+    );
+
+    var newHTML = content(dataIn);
+
+    return newHTML
+
 
 
 }

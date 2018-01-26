@@ -1,7 +1,7 @@
 @import "mq";
 @import "fonts";
 
-$acid-yellow: "#ffff33";
+$acid_yellow: "#ffff33";
 
 $gu_sport: "#00b2ff";
 $gu_sport_kicker: "#056da1";
@@ -152,20 +152,24 @@ $light_neutral: "#EFEFEF";
         width: 100%;
         top: 60px;
 
+        @include mq(desktop){
+            left: -20px;
+        }
+
         //display:none;
 
         .text-wrapper {
             // margin-bottom: 60vh;
-            height: 100vh;
+            height: 80vh;
             position: relative;
             @include mq(tablet) {
                 width: 620px;
             }
             @include mq(leftCol) {
-                margin-left: 60px;
+                //margin-left: 60px;
             }
             @include mq(wide) {
-                margin-left: 60px;
+                // margin-left: 60px;
             }
 
             p {
@@ -178,6 +182,8 @@ $light_neutral: "#EFEFEF";
             &:last-of-type {
                 margin-top: -100px;
             }
+
+            overflow:hidden;
         }
 
         .img-spot:before{
@@ -189,8 +195,14 @@ $light_neutral: "#EFEFEF";
             height:90px;
             margin:15px;
             background-color:#00b2ff;
-            border-radius: 90px;
-              z-index: -1;
+            border-radius: 300px;
+            z-index: -1;
+            @include mq(desktop){
+                width:360px;
+                height:360px;
+                left:-90px;
+                top: -60px;
+            }
         }
         .img-spot{
             width:180px;
@@ -198,13 +210,22 @@ $light_neutral: "#EFEFEF";
             position:absolute;
             background-repeat: no-repeat;
             background-size: contain;
+
+            @include mq(desktop){
+                width:300px;
+                height:300px;
+            }
         }
         .factbox{
             display: block;
             width: 240px;
-            background-color: #FFF;
+            background-color:#ffff33;
             padding: 6px;
             margin:50px 0 0 120px;
+
+            @include mq(desktop){
+                margin:120px 0 0 180px;
+            }
 
             .factname{
                 font-family: "Guardian Egyptian Web", Georgia, serif;
