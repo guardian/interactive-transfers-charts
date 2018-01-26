@@ -48,6 +48,18 @@
     "webpack-stream": "^3.2.0"
   },
   "dependencies": {
+    "d3-array": "^1.2.1",
+    "d3-axis": "^1.0.8",
+    "d3-collection": "^1.0.4",
+    "d3-format": "^1.2.2",
+    "d3-request": "^1.0.6",
+    "d3-scale": "^1.0.7",
+    "d3-shape": "^1.2.0",
+    "d3-time": "^1.0.8",
+    "d3-transition": "^1.1.1",
+    "d3fc-discontinuous-scale": "^2.0.5",
+    "fs": "0.0.1-security",
+    "handlebars": "^4.0.11",
     "promise-polyfill": "^6.0.2",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",

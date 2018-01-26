@@ -1,4 +1,7 @@
 import loadJson from "../components/load-json"
+import Handlebars from 'handlebars/dist/handlebars'
+//import paraTemplate from "./src/templates/para.html!text"
+
 
 import * as d3Scale from 'd3-scale'
 import * as d3Array from 'd3-array'
@@ -55,7 +58,7 @@ const svgClientRect = svgEl.getBoundingClientRect();
 const chartWidth = width;
 const height = (!isiOS) ? svgClientRect.height - 36 : svgClientRect.height - 108;
 const chartMargin = {top: 20, bottom: 20, right:10, left: 10}
-const bigDealThreshold = chartWidth < 620 ? 49999999 : 49999999;
+const bigDealThreshold = chartWidth < 620 ? 59999999 : 59999999;
 const elHeight = (!isiOS) ? interactiveChartEl.clientHeight : interactiveChartEl.clientHeight - 96;
 const tickTextLabels = chartWidth < 620 ? tickTextLabelsShort : tickTextLabelsLong;
 
@@ -63,6 +66,7 @@ const maxSumFee = 300000000; //300m
 
 
 console.log(height, width, "wh")
+
 
 
  Promise.all([
@@ -73,6 +77,8 @@ console.log(height, width, "wh")
     	const data = allData[0].sheets.allDeals;
 
         let tempTotalFee = 0;
+
+        let parasObj = {objArr: []};
 
         //var buyData = groupBy(data, 'What is the new club?');
 
@@ -121,7 +127,14 @@ console.log(height, width, "wh")
 	        if(isNaN(tempdateStamp)){
 	        	console.log("ERROR", transfer['Player name'],transfer.Timestamp )
 	        }
+
+            if(transfer.longFee > bigDealThreshold){
+                transfer.bigDeal = true;
+                parasObj.objArr.push(transfer);
+            }
 	    })
+
+        addParas(parasObj);
 
         // Get an array of checkout values only
         var allFees = data.map(function(item) {
@@ -780,6 +793,26 @@ function stackedBarView(data, tgtSlot){
 
 
     barHolder.selectAll(".domain").remove();
+
+}
+
+function addParas(d){
+    // Handlebars.registerPartial({
+    //     'paras': paraTemplate
+    // });
+
+    // var content = Handlebars.compile(
+    //     paras, {
+    //         compat: true
+    //     }
+    // );
+
+    // var newHTML = content(d);
+
+    // return newHTML
+
+    console.log(d)
+
 
 }
 
