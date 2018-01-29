@@ -4,7 +4,6 @@ import Handlebars from 'handlebars/dist/handlebars'
 
 import paraItem from '../templates/para.html'
 
-
 import * as d3Scale from 'd3-scale'
 import * as d3Array from 'd3-array'
 import * as d3Axis from 'd3-axis'
@@ -32,10 +31,18 @@ const formatNumber = d3.format(".0f"),
 };
 
 const selectedLeagues = ["Premier League","La Liga","Ligue 1","Serie A","Bundesliga"];
-const tickTextLabelsLong = ["1 January 2016","Summer 2017","1 January 2017"];
-const tickTextLabelsShort = ["1 Jan 2016","Summer 2017","1 Jan 2017"];
-const tickDates = [ {startDate:  new Date("Dec 20 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Jan 31 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Oct 20 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
-const windowClosureDates = [ {startDate: new Date("Feb 1 2017 00:01:00 GMT (GMT)"), endDate: new Date("May 14 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("Sep 1 2017 00:01:00 GMT+0100 (BST)"), endDate:  new Date("Dec 14 2017 23:59:00 GMT (GMT)")} ];
+const tickTextLabelsLong = ["1 January 2017","Summer 2017","1 January 2018"];
+const tickTextLabelsShort = ["1 Jan 2017","Summer 2017","1 Jan 2018"];
+const tickDates = [ {startDate:  new Date("Dec 10 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Feb 01 2017 23:58:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Oct 20 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
+const windowClosureDates = [ {startDate: new Date("Feb 1 2017 23:59:00 GMT (GMT)"), endDate: new Date("May 14 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("Sep 1 2017 00:01:00 GMT+0100 (BST)"), endDate:  new Date("Dec 14 2017 23:59:00 GMT (GMT)")} ];
+
+var minDate = tickDates[0].startDate.getTime();
+var maxDate = tickDates[2].endDate.getTime();
+
+var closedStartsI = windowClosureDates[0].startDate.getTime();
+var closedEndsI = windowClosureDates[0].endDate.getTime();
+var closedStartsII = windowClosureDates[1].startDate.getTime();
+var closedEndsII = windowClosureDates[1].endDate.getTime();
 
 let prevScroll = 0;
 let prevCutOff = 0;
@@ -60,27 +67,39 @@ const svgClientRect = svgEl.getBoundingClientRect();
 const chartWidth = width;
 const height = (!isiOS) ? svgClientRect.height - 36 : svgClientRect.height - 108;
 const chartMargin = {top: 20, bottom: 20, right:10, left: 10}
-const bigDealThreshold = chartWidth < 620 ? 59999999 : 59999999;
+const bigDealThreshold = chartWidth < 620 ? 49999999 : 49999999;
 const elHeight = (!isiOS) ? interactiveChartEl.clientHeight : interactiveChartEl.clientHeight - 96;
 const tickTextLabels = chartWidth < 620 ? tickTextLabelsShort : tickTextLabelsLong;
 
 const maxSumFee = 300000000; //300m
 
 
+const dateScale = scaleDiscontinuous(d3.scaleLinear())
+           .discontinuityProvider(discontinuityRange([closedStartsI, closedEndsI], [closedStartsII, closedEndsII]))
+            .domain([minDate, maxDate])
+            .range([0, interactiveChartEl.offsetHeight]);
+
+
  Promise.all([
         loadJson(process.env.PATH + "/assets/data/transfers.json")
-    ])
-    .then((allData) => {
+    ]).then((allData) => {
 
     	const data = allData[0].sheets.allDeals;
 
         let tempTotalFee = 0;
 
-        let parasObj = {objArr: []};
+        let tempWinFee = 0;
+
+        let parasObj = { objArr:[] };
 
         //var buyData = groupBy(data, 'What is the new club?');
 
     	data.map((transfer,i) => {
+            let prevWindow ;
+            if(i > 0 && data[i-1].transferWindow){
+                prevWindow = data[i-1].transferWindow;
+            }
+
             if(transfer['What is the new league?'] === selectedLeagues[0] || transfer['What is the new league?'] === selectedLeagues[1] ||transfer['What is the new league?'] === selectedLeagues[2] || transfer['What is the new league?'] === selectedLeagues[3] || transfer['What is the new league?'] === selectedLeagues[4]){
                 transfer.transferBuyLeague = transfer['What is the new league?'];
                 transfer.selectLeagueBuy = true;  
@@ -105,41 +124,42 @@ const maxSumFee = 300000000; //300m
 	        	transfer.longFee = 0;
 	        }
 
-            if(transfer.longFee > bigDealThreshold){
-                transfer.bigDeal = true;
-            }
-
-            tempTotalFee += transfer.longFee;
-            transfer.totalSpendAfterDeal = tempTotalFee;
-
 	        let tempDateArr = transfer.Timestamp.split("/");       
 	        let tempdateStamp = new Date(tempDateArr[1]+"/"+tempDateArr[0]+"/"+tempDateArr[2]);
 
 	        if(!isNaN(tempdateStamp)){
 	        	transfer.dateStamp = tempdateStamp;
 	        	transfer.utcStamp = tempdateStamp.getTime();
-
                 transfer.transferWindow = getTransferWindow(transfer.dateStamp); 
+
 	        }
+            if (transfer.transferWindow != prevWindow) { 
+                tempWinFee = 0;
+               
+            }
+
+            tempTotalFee += transfer.longFee;
+            tempWinFee += transfer.longFee;
+            transfer.totalSpendAfterDeal = tempTotalFee;
+            transfer.totalWinSpend = tempWinFee;
 
 	        if(isNaN(tempdateStamp)){
 	        	console.log("ERROR", transfer['Player name'],transfer.Timestamp )
 	        }
 
-            if(transfer.longFee > bigDealThreshold){
+            if(transfer.longFee > bigDealThreshold  || transfer.playerName == "Corentin Tolisso"){
                 transfer.bigDeal = true;
                 transfer.newClub = transfer['What is the new club?'];
                 transfer.prevClub = transfer['What was the previous club?'];
                 transfer.dateVal = {day: transfer.dateStamp.getDay() , month: monthStrings[transfer.dateStamp.getMonth()],  year: transfer.dateStamp.getFullYear()}
                 transfer.imgPath = process.env.PATH+'/assets/cutouts/'+transfer.refNum+'.png';
-                //
+                transfer.dealPos = dateScale(transfer.utcStamp);
+              
                 //var jsPath = process.env.PATH;
                 parasObj.objArr.push(transfer);
             }
 	    })
-        
     
-
         var paraHTML = addParas(parasObj);
 
         document.querySelector(".chart-text").innerHTML = paraHTML;
@@ -156,18 +176,6 @@ const maxSumFee = 300000000; //300m
 
         // console.log(formatAbbreviation(grandTotalFee))
 		var maxFee = grandTotalFee;
-		var minDate = tickDates[0].startDate.getTime();
-		var maxDate = tickDates[2].endDate.getTime();
-
-        var closedStartsI = windowClosureDates[0].startDate.getTime();
-        var closedEndsI = windowClosureDates[0].endDate.getTime();
-        var closedStartsII = windowClosureDates[1].startDate.getTime();
-        var closedEndsII = windowClosureDates[1].endDate.getTime();
-
-        // var scale = scaleDiscontinuous(scaleLinear())
-        //     .discontinuityProvider(discontinuityRange([50, 75]))
-        //     .domain([0, 100])
-        //     .range([0, 550]);
 
         const xScale = scaleDiscontinuous(d3.scaleLinear())
             .discontinuityProvider(discontinuityRange([closedStartsI, closedEndsI], [closedStartsII, closedEndsII]))
@@ -178,33 +186,6 @@ const maxSumFee = 300000000; //300m
             .domain([0, grandTotalFee])
             .range([height - chartMargin.top - chartMargin.bottom, 0])
             .clamp(true);
-
-        // const wrapper = interactiveChartEl.append("div")
-        //         .classed("line-wrapper", true);   
-
-        // const textWrapper = wrapper.append("div")
-        //         .classed("chart-text",true) 
-                
-        // textWrapper.append("div")
-        //         .html("<div class='p-wrapper'><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p></div>")
-        //         .classed("text-wrapper", true);        
-        // textWrapper.append("div")
-        //         .html("<div class='p-wrapper'><p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. </p></div>")
-        //         .classed("text-wrapper", true);      
-        // textWrapper.append("div")
-        //         .html("<div class='p-wrapper'><p>Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.</p></div>")
-        //         .classed("text-wrapper", true);      
-        // textWrapper.append("div")
-        //         .html("<div class='p-wrapper'><p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio.</p></div>")
-        //         .classed("text-wrapper", true);      
-
-
-        //const svg = svgEl
-                // .attr("height", height + chartMargin.bottom + chartMargin.top  )
-                // .attr("width", width)
-                // .classed("line-chart", true); 
-
-
 
             const svgContainerEl = d3.select(".interactive-chart svg"); 
 
@@ -234,6 +215,15 @@ const maxSumFee = 300000000; //300m
                 .style("fill", palette.gu_sport_background)
                 .attr("d", transfersArea);    
 
+
+            const transfersLineElDashed = chartGroup.append("path")
+                .data([data])
+                .style("stroke", palette.gu_sport)
+                .style("stroke-width", "1.5px")
+                .style("fill", "none")
+                .attr("id", "transfersLineDashed")
+                .attr("d", transfersLine);
+
             chartGroup.append("g").classed("x-axis", true).call(xAxis).style("transform", "translateY(" + height + "px)")
 
             const yAxisEl = chartGroup.append("g").classed("y-axis", true); 
@@ -242,9 +232,10 @@ const maxSumFee = 300000000; //300m
 
             chartGroup.selectAll(".domain").remove();
             chartGroup.selectAll(".y-axis text").attr("x", 0).attr("dy", "-4").style("text-anchor", "start").style("font-family","'Guardian Text Sans Web',sans-serif")
-                            .style("font-size","13px")
-                            .style("font-weight", "700" )
-                            .style("fill", "#333");
+                .style("font-size","13px")
+                .style("font-weight", "700" )
+                .style("fill", "#333");
+
             chartGroup.selectAll(".y-axis .tick:not(:first-of-type) line").attr("stroke", "#dcdcdc").attr("stroke-width","1px").attr("stroke-dasharray", "1,1");
             chartGroup.selectAll(".y-axis line").attr("x", 0).attr("x2", width);
 
@@ -253,22 +244,6 @@ const maxSumFee = 300000000; //300m
                 .attr("x2", width)
                 .attr("y1", height)
                 .attr("y2", height);
-
-            chartGroup.select(".y-axis").append("line")
-                .attr("class", "closedBar")
-                .attr("x1", xScale(tickDates[0].endDate.getTime()))
-                .attr("x2", xScale(tickDates[0].endDate.getTime()))
-                .attr("y1", -6)
-                .attr("y2", height+18)
-                .attr("stroke",  "1px" );
-
-            chartGroup.select(".y-axis").append("line")
-                .attr("class", "closedBar")
-                .attr("x1", xScale(tickDates[1].endDate.getTime()))
-                .attr("x2", xScale(tickDates[1].endDate.getTime()))
-                .attr("y1", -6)
-                .attr("y2", height+18)
-                .attr("stroke","#FFF");
 
             chartGroup.selectAll(".x-axis .tick text")
                 .text("").style("font-family","'Guardian Text Sans Web',sans-serif")
@@ -289,14 +264,6 @@ const maxSumFee = 300000000; //300m
 
             chartGroup.selectAll(".y-axis .tick:first-of-type")
                 .style("display", "none"); 
-
-            // const transfersLineEl = chartGroup.append("path")
-            //     .data([data])
-            //     .style("stroke", "#fc0")
-            //     .style("stroke-width", "1px")
-            //     .style("fill", "none")
-            //     .attr("id","transferLine")
-            //     .attr("d", transfersLine); 
             
             var mask = svgContainerEl.append("defs")
                  .append("mask")
@@ -310,23 +277,50 @@ const maxSumFee = 300000000; //300m
                 .style("stroke-width", "5px")                
                 .style("stroke-dasharray", "2,2");
 
-            const transfersLineElDashed = chartGroup.append("path")
-                .data([data])
-                .style("stroke", palette.gu_sport)
-                .style("stroke-width", "1.5px")
-                .style("fill", "none")
-                .attr("id", "transfersLineDashed")
-                .attr("d", transfersLine)
-                //.attr("mask","url(#dashMaskLine)");  
+            chartGroup.select(".y-axis").append("line")
+                .attr("class", "closedBar")
+                .attr("x1", xScale(tickDates[0].endDate.getTime()))
+                .attr("x2", xScale(tickDates[0].endDate.getTime()))
+                .attr("y1", -6)
+                .attr("y2", height+18)
+                .style("stroke-width", "3px") 
+                .style("stroke","#FFF");
+
+            chartGroup.select(".y-axis").append("line")
+                .attr("class", "closedBar")
+                .attr("x1", xScale(tickDates[1].endDate.getTime()) +2)
+                .attr("x2", xScale(tickDates[1].endDate.getTime()) +2)
+                .attr("y1", -6)
+                .attr("y2", height+18)
+                .style("stroke-width", "3px") 
+                .style("stroke","#FFF");
 
             document.querySelector("#hidden-svg path").setAttribute("d", transfersLine(data));
 
             const lineLength = document.querySelector("#transfersLineDashed").getTotalLength();
 
-            console.log("lineLength",lineLength)
+            // console.log("lineLength",lineLength)
             
             data.forEach((d) => {
                     if (d.bigDeal) {
+                        
+                        var circ = chartGroup.append("circle")
+                            .attr("cx", xScale(d.utcStamp))
+                            .attr("cy", yScale(d.totalSpendAfterDeal))
+                            .attr("r", 0)
+                            .style("stroke", palette.gu_sport)
+                            .style("stroke-width", "1.5px")
+                            .style("fill", palette.gu_sport)                            
+                            .transition()
+                            .duration(2500)
+                            .attr("r", 7)                            
+                            .transition()
+                            .duration(250)
+                            .attr("r", 3)
+                            .attr("id", "circ_"+d.refNum)
+                            .attr("class","chart-hl-circle hidden")
+                            
+
                         chartGroup.append("text")
                             .text(d.playerName)
                             .attr("x", xScale(d.utcStamp))
@@ -340,63 +334,17 @@ const maxSumFee = 300000000; //300m
                             .style("font-size","12px")
                             .style("font-weight", "400" )
                             .style("fill", "#333")
-
-                        chartGroup.append("circle")
-                            .attr("cx", xScale(d.utcStamp))
-                            .attr("cy", yScale(d.totalSpendAfterDeal))
-                            .attr("r", 0)
-                            .style("stroke", palette.gu_sport)
-                            .style("stroke-width", "1.5px")
-                            .style("fill", palette.gu_sport)                            
-                            .transition()
-                            .duration(2500)
-                            .attr("r", 7)                            
-                            .transition()
-                            .duration(250)
-                            .attr("r", 3)
-                            .attr("class","chart-hl-circle hidden")
-                            .attr("id", "circ_"+d.refNum)
                     }
             });
 
             
-              
-            
-              //.attr("y", "-1px" })
-              //.attr("fill", palette.light_neutral)
-              //.attr("height", height-1)
+            setBarChartData(data);
 
-            //   chartGroup.append("text")
-            //     .text("window closed")
-            //     .attr("x", xScale(tickDates[0].endDate.getTime()) + 5+"px" )
-            //     .style("font-family","'Guardian Text Sans Web',sans-serif")
-            //     .style("font-size","12px")
-            //     .style("font-weight", "400" )
-            //     .style("fill", "#AAA")
-
-            // chartGroup.append("rect")
-            //   .attr("class", "closedBar")
-            //   .attr("x", xScale(tickDates[1].endDate.getTime())-30+"px" )
-            //   .attr("width",  "30px" )
-            //   //.attr("y", "-1px" })
-            //   .attr("fill", palette.light_neutral)
-            //   .attr("height", height-1)
-
-            //   chartGroup.append("text")
-            //     .text("window closed")
-            //     .attr("x", xScale(tickDates[1].endDate.getTime()) + 5+"px" )
-            //     .style("font-family","'Guardian Text Sans Web',sans-serif")
-            //     .style("font-size","12px")
-            //     .style("font-weight", "400" )
-            //     .style("fill", "#AAA")
-
-            
-           setBarChartData(data);
+            setWindowAreaData(data);
 
             var twoWeeks = 1000 * 60 * 60 * 24 * 14;
 
        
-
             function getTransferWindow(dateIn){
                 var winStr;
                 if(dateIn > tickDates[0].startDate && dateIn < tickDates[0].endDate){ winStr = "jan2017" }; 
@@ -416,7 +364,6 @@ const maxSumFee = 300000000; //300m
 
 
 function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl) {
-     //console.log(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svg, svgContainerEl, prevScroll)
 
     window.requestAnimationFrame(() => {
         const scroll = window.pageYOffset;
@@ -467,11 +414,10 @@ function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveCha
             prevScroll = scroll;
 
             var scrollToUse = scroll - elOffset;
-            var scrollDepth = 1.1 * (scrollToUse / (elHeight - height));
-
-            
+            var scrollDepth = 1.1 * (scrollToUse / (elHeight - height)); 
 
             doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl);
+
         }
 
         checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl);
@@ -490,38 +436,52 @@ function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContai
         scrollDepth = 1;
     }
 
-    // if (scrollDepth < prevScrollDepth) {
-    //     return;
-    // }
-
-    console.log("scrollDepth", scrollDepth * lineLength)
-//checkCircles(scrollDepth * lineLength);
     prevScrollDepth = scrollDepth;
 
     
     const depthChange = Math.abs(scrollDepth - scrollDepth);
 
-    //console.log("doing a scroll", scrollDepth, depthChange)
-
-    // Reverse the drawing (when scrolling upwards)
-
 
     var draw = lineLength - (scrollDepth * lineLength);
 
-    var pt = transfersLineElDashed.node().getPointAtLength(draw);
+    var pt = transfersLineElDashed.node().getPointAtLength(lineLength - draw);
 
-    console.log(pt)
+    checkCircles(pt, lineLength - draw)
 
     transfersLineElDashed
         .transition().duration(2500 * depthChange).style("stroke-dashoffset", draw)
-        //console.log("look here",lineLength - draw)
+
      
 }
 
-function checkCircles(draw){  
-    console.log(draw)
-}
+function checkCircles(pt, draw){  
 
+    var circlesArr = document.querySelectorAll(".interactive-chart svg circle");
+    
+    circlesArr.forEach((circle) => {
+        var labelItem = document.querySelector(".interactive-chart svg #label_"+circle.id.split("_")[1]);
+
+        if (Number(circle.getAttribute("cx") ) < pt.x ){
+            circle.classList.remove('hidden');
+
+            if(labelItem){
+                labelItem.classList.remove("hidden");
+            }
+            
+        }
+
+        if (Number(circle.getAttribute("cx") ) > pt.x ){
+            circle.classList.add('hidden');
+            if(labelItem){
+                labelItem.classList.add("hidden");
+            }
+        }
+
+    })  
+
+
+
+}
 
 
 function featureTest(property, value, noPrefixes) {
@@ -548,10 +508,6 @@ function formatAbbreviation(x) {
 
 function setBarChartData(data){
 
-            // var sellData = data.filter(function(transfer) {
-            //     return transfer.selectLeagueSale = true;
-            // });
-
             var sellData = data.filter(transfer => transfer.selectLeagueSale);
   
             sellData = groupBy(sellData, 'What was the previous club?');
@@ -577,7 +533,7 @@ function setBarChartData(data){
             //     return transfer.selectLeagueBuy = true;
             // });
 
-            var buyData = data.filter(transfer => transfer.selectLeagueBuy);
+            var buyData = data.filter(transfer => transfer.selectLeagueBuy);          
 
             buyData = groupBy(buyData, 'What is the new club?');
 
@@ -754,9 +710,154 @@ function stackedBarView(data, tgtSlot){
 
     barHolder.selectAll(".bar-x-axis .tick:first-of-type text").text("0").style("text-anchor", "start");
 
-
     barHolder.selectAll(".domain").remove();
 
+}
+
+
+function setWindowAreaData(data){
+    var winData = groupBy(data, 'transferWindow');
+
+    console.log(winData);
+
+    winData = sortByKeys(winData);
+           
+             winData.forEach((win, key) => {
+                if(win.sortOn == "jan2017"){
+                    addAreaChart(win, tickDates[0], "win1");
+                }
+
+                if(win.sortOn == "summer2017"){
+                    addAreaChart(win, tickDates[1], "win2");
+                }
+
+                if(win.sortOn == "jan2018"){
+                    addAreaChart(win, tickDates[2], "win3");
+                }
+                // team.totalSell = 0;          
+                // team.objArr.map((player,i) => {
+                //     team.totalSell += player.longFee;
+                // })               
+            });
+}
+
+function addAreaChart(winData, reqDates, tgt){
+        var maxFee = 5000000000;
+        var minWinDate = reqDates.startDate.getTime();
+        var maxWinDate = reqDates.startDate.setMonth(reqDates.startDate.getMonth() + 5, 1);
+        const containerEl = d3.select("#"+tgt);
+        const svgContainerEl = d3.select("#"+tgt+" svg"); 
+
+
+
+        console.log(reqDates.startDate.setMonth(reqDates.startDate.getMonth() + 4, 1))
+
+        var smAreaSize = { "w": 420, "h": 140}
+
+        const xScale = d3.scaleLinear()
+            .domain([minWinDate, maxWinDate])
+            .range([0, smAreaSize.w]);
+
+        const yScale = d3.scaleLinear()
+            .domain([0, maxFee])
+            .range([smAreaSize.h - 20, 0])
+            .clamp(true);
+
+        const windowLine = d3.line()
+            .x(d => xScale(d.utcStamp))
+            .y(d => yScale(d.totalWinSpend))
+            .curve(d3.curveStepAfter);
+
+        const chartGroup = svgContainerEl.append("g");
+
+        const dataViz = chartGroup.append("g").style("transform", "translateX(" + 30 + "px)")
+
+        const winLineDraw = dataViz.append("path")
+                .data([winData.objArr])
+                .style("stroke", palette.gu_sport)
+                .style("stroke-width", "1.5px")
+                .style("fill", "none")
+                .attr("id", "winLineDashed")
+                .attr("d", windowLine);
+
+        const windowArea = d3.area()
+            .x(d => xScale(d.utcStamp))
+            .y0(height)
+            .y1(d => yScale(d.totalWinSpend))
+            .curve(d3.curveStepAfter);
+
+        dataViz.append("path")
+                .data([winData.objArr])
+                .attr("class", "area")                                   
+                .style("fill", palette.gu_sport_background)
+                .attr("d", windowArea);   
+
+        const xAxis = d3.axisBottom(xScale).ticks(3);
+
+        const yAxis = d3.axisLeft(yScale)
+            .tickSize(width)
+            .ticks(4).tickFormat(formatAbbreviation);
+
+        chartGroup.append("g").classed("x-axis", true).call(xAxis).style("transform", "translateY(" + height + "px)")
+
+        const yAxisEl = chartGroup.append("g").classed("y-axis", true); 
+
+        yAxisEl.call(yAxis);
+
+
+        chartGroup.selectAll(".domain").remove();
+
+        chartGroup.selectAll(".y-axis text").attr("x", 0).attr("dy", "-4").style("text-anchor", "start").style("font-family","'Guardian Text Sans Web',sans-serif")
+            .style("font-size","13px")
+            .style("font-weight", "700" )
+            .style("fill", "#333");
+
+            chartGroup.selectAll(".y-axis .tick:not(:first-of-type) line").attr("stroke", "#dcdcdc").attr("stroke-width","1px").attr("stroke-dasharray", "1,1");
+            chartGroup.selectAll(".y-axis line").attr("x", 0).attr("x2", width);
+
+            chartGroup.select(".y-axis").append("line")
+                .attr("x1", 0)
+                .attr("x2", width)
+                .attr("y1", height)
+                .attr("y2", height);
+
+            chartGroup.selectAll(".x-axis .tick text")
+                .text("").style("font-family","'Guardian Text Sans Web',sans-serif")
+                .style("font-size","13px")
+                .style("font-weight", "700" )
+                .attr("dy","15px")
+                .attr("dx","6px")
+                .style("fill", "#333")
+
+            chartGroup.selectAll(".x-axis .tick:first-of-type text")
+                .text(tickTextLabels[0]).style("text-anchor", "start");
+
+            chartGroup.selectAll(".x-axis .tick:nth-child(3) text")
+                .text(tickTextLabels[1]).style("text-anchor", "start");
+
+            chartGroup.selectAll(".x-axis .tick:nth-child(5) text")
+                .text(tickTextLabels[2]).style("text-anchor", "start");
+
+            chartGroup.selectAll(".y-axis .tick:first-of-type")
+                .style("display", "none"); 
+
+        //     const transfersLine = d3.line()
+        //         .x(d => xScale(d.utcStamp))
+        //         .y(d => yScale(d.totalSpendAfterDeal))
+        //         .curve(d3.curveStepAfter);
+
+        //     const transfersArea = d3.area()
+        //         .x(d => xScale(d.utcStamp))
+        //         .y0(height)
+        //         .y1(d => yScale(d.totalSpendAfterDeal))
+        //         .curve(d3.curveStepAfter);
+
+        //     const xAxis = d3.axisBottom(xScale).tickSize(0)
+        //         .tickValues([tickDates[0].startDate.getTime(), tickDates[0].endDate.getTime(), tickDates[1].startDate.getTime(), tickDates[1].endDate.getTime(), tickDates[2].startDate.getTime(), tickDates[2].endDate.getTime()]);
+
+        //     const yAxis = d3.axisLeft(yScale)
+        //         .tickSize(width)
+        //         .ticks(4).tickFormat(formatAbbreviation);
 }
 
 function addParas(dataIn){
@@ -781,56 +882,7 @@ function addParas(dataIn){
 
     return newHTML
 
-
-
 }
 
 
 
-// const xAxis = d3.axisBottom(xScale)
-//                 .tickValues([tickDates[0].startDate.getTime(), tickDates[0].endDate.getTime(), tickDates[1].startDate.getTime(), tickDates[1].endDate.getTime(), tickDates[2].startDate.getTime(), tickDates[2].endDate.getTime()]);
-
-//             const yAxis = d3.axisLeft(yScale)
-//                 .tickSize(width)
-//                 .ticks(4).tickFormat(formatAbbreviation);
-
-//             const chartGroup = svg.append("g").style("transform", "translateY(" + chartMargin.top + "px)")
-
-//             chartGroup.append("path")
-//                 .data([data])
-//                 .attr("class", "area")                                   
-//                 .style("fill", "#f6f6f6")
-//                 .attr("d", transfersArea);    
-
-//             chartGroup.append("g").classed("x-axis", true).call(xAxis).style("transform", "translateY(" + height + "px)")
-
-//             const yAxisEl = chartGroup.append("g").classed("y-axis", true); 
-
-//             yAxisEl.call(yAxis)
-
-//             chartGroup.selectAll(".domain").remove();
-//             chartGroup.selectAll(".y-axis text").attr("x", 0).attr("dy", "-4").style("text-anchor", "start").style("font-family","'Guardian Text Sans Web',sans-serif")
-//                             .style("font-size","13px")
-//                             .style("font-weight", "700" )
-//                             .style("fill", "#333");
-//             chartGroup.selectAll(".y-axis .tick:not(:first-of-type) line").attr("stroke", "#CCC").attr("stroke-width","1px").attr("stroke-dasharray", "1,2");
-//             chartGroup.selectAll(".y-axis line").attr("x", 0).attr("x2", width)
-
-//             chartGroup.select(".y-axis").append("line")
-//                 .attr("x1", 0)
-//                 .attr("x2", width)
-//                 .attr("y1", height)
-//                 .attr("y2", height)
-
-//             // chartGroup.select(".y-axis").append("line")
-//             //     .attr("x1", 0)
-//             //     .attr("x2", width)
-//             //     .attr("y1", 0)
-//             //     .attr("y2", 0)
-//             //     .classed("target-line", true)
-
-//             chartGroup.selectAll(".x-axis .tick text")
-//                 .text("").style("font-family","'Guardian Text Sans Web',sans-serif")
-//                             .style("font-size","13px")
-//                             .style("font-weight", "700" )
-//                             .style("fill", "#333")
