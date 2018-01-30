@@ -31,8 +31,8 @@ const formatNumber = d3.format(".0f"),
 };
 
 const selectedLeagues = ["Premier League","La Liga","Ligue 1","Serie A","Bundesliga"];
-const tickTextLabelsLong = ["1 January 2017","Summer 2017","1 January 2018"];
-const tickTextLabelsShort = ["1 Jan 2017","Summer 2017","1 Jan 2018"];
+const tickTextLabelsLong = ["January 2017","Summer 2017","January 2018"];
+const tickTextLabelsShort = ["Jan 2017","Summer 2017","Jan 2018"];
 const tickDates = [ {startDate:  new Date("Dec 10 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Feb 01 2017 23:58:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Oct 20 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
 const windowClosureDates = [ {startDate: new Date("Feb 1 2017 23:59:00 GMT (GMT)"), endDate: new Date("May 14 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("Sep 1 2017 00:01:00 GMT+0100 (BST)"), endDate:  new Date("Dec 14 2017 23:59:00 GMT (GMT)")} ];
 
@@ -78,6 +78,9 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
            .discontinuityProvider(discontinuityRange([closedStartsI, closedEndsI], [closedStartsII, closedEndsII]))
             .domain([minDate, maxDate])
             .range([0, interactiveChartEl.offsetHeight]);
+
+var prevDealPos = 0;
+
 
 
  Promise.all([
@@ -154,7 +157,12 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
                 transfer.dateVal = {day: transfer.dateStamp.getDay() , month: monthStrings[transfer.dateStamp.getMonth()],  year: transfer.dateStamp.getFullYear()}
                 transfer.imgPath = process.env.PATH+'/assets/cutouts/'+transfer.refNum+'.png';
                 transfer.dealPos = dateScale(transfer.utcStamp);
-              
+               if ((prevDealPos+220) > transfer.dealPos){
+                    transfer.dealPos = prevDealPos+220;
+                }
+                prevDealPos = transfer.dealPos;
+                // if(prevDealPos) {  }
+                // 
                 //var jsPath = process.env.PATH;
                 parasObj.objArr.push(transfer);
             }

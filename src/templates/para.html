@@ -1,14 +1,17 @@
 {{#each objArr}} 
-	<div class="text-wrapper"  style="top: {{{dealPos}}}px;">
+	<div class="text-wrapper player-{{{refNum}}}"  style="top:{{{dealPos}}}px;">
 		<div class="p-wrapper">
-			<div class="img-spot" style="background-image: url('{{{imgPath}}}');">
-			</div>	
+			
 			<div class="factbox">
-				<span class="factfee">£{{{shortFee}}}m</span>
-				<span class="factname">{{{playerName}}}</span>				
-				<span class="factline">{{{prevClub}}} to {{{newClub}}}</span>
-				<span class="factdate">{{{dateVal.day}}} {{{dateVal.month}}} {{{dateVal.year}}}</span>
+				<div class="img-spot-bg"></div>				
+				<div class="img-spot" style="background-image: url('{{{imgPath}}}');">	</div>	
+				<div class="factfee">£{{{shortFee}}}m</div>
+				<div class="factname">{{{playerName}}}</div>				
+				<div class="factline">{{{prevClub}}} to {{{newClub}}}</div>
+				<div class="factdate">{{{dateVal.day}}} {{{dateVal.month}}} {{{dateVal.year}}}</div>
+
 			</div>
+
 		</div>
 	</div>
 {{/each}} 
