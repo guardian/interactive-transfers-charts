@@ -31,18 +31,18 @@ const formatNumber = d3.format(".0f"),
 };
 
 const selectedLeagues = ["Premier League","La Liga","Ligue 1","Serie A","Bundesliga"];
-const tickTextLabelsLong = ["1 January 2017","Summer 2017","1 January 2018"];
-const tickTextLabelsShort = ["1 Jan 2017","Summer 2017","1 Jan 2018"];
-const tickDates = [ {startDate:  new Date("Dec 10 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Feb 01 2017 23:58:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Oct 20 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
-const windowClosureDates = [ {startDate: new Date("Feb 1 2017 23:59:00 GMT (GMT)"), endDate: new Date("May 14 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("Sep 1 2017 00:01:00 GMT+0100 (BST)"), endDate:  new Date("Dec 14 2017 23:59:00 GMT (GMT)")} ];
+const tickTextLabelsLong = ["January 2017 transfer window","Summer 2017","January 2018"];
+const tickTextLabelsShort = ["Jan 2017","Summer 2017","Jan 2018"];
+
+const tickDates = [ {startDate:  new Date("Dec 10 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Feb 01 2017 23:58:00 GMT (GMT)")}, {startDate:  new Date("May 1 2017 00:00:00 GMT (GMT)"), endDate:  new Date("Sep 5 2017 00:30:00 GMT (GMT)")}, {startDate:  new Date("Nov 15 2017 00:20:00 GMT (GMT)"), endDate: new Date("Feb 15 2018 00:00:00 GMT (GMT)")} ]
 
 var minDate = tickDates[0].startDate.getTime();
 var maxDate = tickDates[2].endDate.getTime();
 
-var closedStartsI = windowClosureDates[0].startDate.getTime();
-var closedEndsI = windowClosureDates[0].endDate.getTime();
-var closedStartsII = windowClosureDates[1].startDate.getTime();
-var closedEndsII = windowClosureDates[1].endDate.getTime();
+var closedStartsI = tickDates[0].endDate.getTime();
+var closedEndsI = tickDates[1].startDate.getTime();
+var closedStartsII = tickDates[1].endDate.getTime();
+var closedEndsII = tickDates[2].startDate.getTime();
 
 let prevScroll = 0;
 let prevCutOff = 0;
@@ -73,31 +73,42 @@ const tickTextLabels = chartWidth < 620 ? tickTextLabelsShort : tickTextLabelsLo
 
 const maxSumFee = 300000000; //300m
 
+var dividers = []
+
+
+var prevDealPos = 0;
 
 const dateScale = scaleDiscontinuous(d3.scaleLinear())
-           .discontinuityProvider(discontinuityRange([closedStartsI, closedEndsI], [closedStartsII, closedEndsII]))
-            .domain([minDate, maxDate])
-            .range([0, interactiveChartEl.offsetHeight]);
+    .discontinuityProvider(discontinuityRange([closedStartsI, closedEndsI], [closedStartsII, closedEndsII]))
+    .domain([minDate, maxDate])
+    .range([0, interactiveChartEl.offsetHeight]);
 
 
  Promise.all([
         loadJson(process.env.PATH + "/assets/data/transfers.json")
     ]).then((allData) => {
 
-    	const data = allData[0].sheets.allDeals;
+    	const data = allData[0].sheets.allDeals.filter(transfer => transfer["Transfer type"] === "fee");
+
+
+        //console.log(data)
 
         let tempTotalFee = 0;
-
         let tempWinFee = 0;
-
         let parasObj = { objArr:[] };
 
         //var buyData = groupBy(data, 'What is the new club?');
 
     	data.map((transfer,i) => {
-            let prevWindow ;
+
+           // console.log(transfer)
+            let prevWindow;
+            var prevTransfer;
             if(i > 0 && data[i-1].transferWindow){
                 prevWindow = data[i-1].transferWindow;
+            }
+            if(i > 0){
+                prevTransfer = data[i-1];
             }
 
             if(transfer['What is the new league?'] === selectedLeagues[0] || transfer['What is the new league?'] === selectedLeagues[1] ||transfer['What is the new league?'] === selectedLeagues[2] || transfer['What is the new league?'] === selectedLeagues[3] || transfer['What is the new league?'] === selectedLeagues[4]){
@@ -131,11 +142,14 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
 	        	transfer.dateStamp = tempdateStamp;
 	        	transfer.utcStamp = tempdateStamp.getTime();
                 transfer.transferWindow = getTransferWindow(transfer.dateStamp); 
-
 	        }
+
             if (transfer.transferWindow != prevWindow) { 
-                tempWinFee = 0;
-               
+                if (prevTransfer){
+                    dividers.push({start: prevTransfer.utcStamp, end: transfer.utcStamp})
+                    console.log(prevTransfer.utcStamp, transfer.utcStamp)
+                }
+                tempWinFee = 0;               
             }
 
             tempTotalFee += transfer.longFee;
@@ -147,18 +161,27 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
 	        	console.log("ERROR", transfer['Player name'],transfer.Timestamp )
 	        }
 
-            if(transfer.longFee > bigDealThreshold  || transfer.playerName == "Corentin Tolisso"){
+            if(transfer.longFee > bigDealThreshold || transfer.playerName == "Bernardo Silva" || transfer.playerName == "Ederson" || transfer.playerName == "Corentin Tolisso" ){
                 transfer.bigDeal = true;
                 transfer.newClub = transfer['What is the new club?'];
                 transfer.prevClub = transfer['What was the previous club?'];
                 transfer.dateVal = {day: transfer.dateStamp.getDay() , month: monthStrings[transfer.dateStamp.getMonth()],  year: transfer.dateStamp.getFullYear()}
                 transfer.imgPath = process.env.PATH+'/assets/cutouts/'+transfer.refNum+'.png';
                 transfer.dealPos = dateScale(transfer.utcStamp);
-              
+                
+                if ((prevDealPos+220) > transfer.dealPos){
+                    transfer.dealPos = prevDealPos+220;
+                }
+                prevDealPos = transfer.dealPos;
+                // if(prevDealPos) {  }
+                // 
                 //var jsPath = process.env.PATH;
                 parasObj.objArr.push(transfer);
             }
 	    })
+
+
+        var transData = data.filter(transfer => transfer.selectLeagueBuy);  
     
         var paraHTML = addParas(parasObj);
 
@@ -180,25 +203,29 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
         const xScale = scaleDiscontinuous(d3.scaleLinear())
             .discontinuityProvider(discontinuityRange([closedStartsI, closedEndsI], [closedStartsII, closedEndsII]))
             .domain([minDate, maxDate])
-            .range([0, width-chartMargin.right]);
+            .range([0, width]);
 
-        const yScale = d3.scaleLinear()
+
+
+        //console.log(xScale(1504320860000), xScale(1513261831000), xScale(maxDate) )          
+
+            const yScale = d3.scaleLinear()
             .domain([0, grandTotalFee])
-            .range([height - chartMargin.top - chartMargin.bottom, 0])
+            .range([height, 0])
             .clamp(true);
 
             const svgContainerEl = d3.select(".interactive-chart svg"); 
 
             const transfersLine = d3.line()
                 .x(d => xScale(d.utcStamp))
-                .y(d => yScale(d.totalSpendAfterDeal))
-                .curve(d3.curveStepAfter);
+                .y(d => yScale(d.totalWinSpend))
+                .curve(d3.curveStep);
 
             const transfersArea = d3.area()
                 .x(d => xScale(d.utcStamp))
                 .y0(height)
-                .y1(d => yScale(d.totalSpendAfterDeal))
-                .curve(d3.curveStepAfter);
+                .y1(d => yScale(d.totalWinSpend))
+                .curve(d3.curveStep);
 
             const xAxis = d3.axisBottom(xScale).tickSize(0)
                 .tickValues([tickDates[0].startDate.getTime(), tickDates[0].endDate.getTime(), tickDates[1].startDate.getTime(), tickDates[1].endDate.getTime(), tickDates[2].startDate.getTime(), tickDates[2].endDate.getTime()]);
@@ -214,7 +241,6 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
                 .attr("class", "area")                                   
                 .style("fill", palette.gu_sport_background)
                 .attr("d", transfersArea);    
-
 
             const transfersLineElDashed = chartGroup.append("path")
                 .data([data])
@@ -277,23 +303,27 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
                 .style("stroke-width", "5px")                
                 .style("stroke-dasharray", "2,2");
 
-            chartGroup.select(".y-axis").append("line")
-                .attr("class", "closedBar")
-                .attr("x1", xScale(tickDates[0].endDate.getTime()))
-                .attr("x2", xScale(tickDates[0].endDate.getTime()))
-                .attr("y1", -6)
-                .attr("y2", height+18)
-                .style("stroke-width", "3px") 
-                .style("stroke","#FFF");
 
-            chartGroup.select(".y-axis").append("line")
-                .attr("class", "closedBar")
-                .attr("x1", xScale(tickDates[1].endDate.getTime()) +2)
-                .attr("x2", xScale(tickDates[1].endDate.getTime()) +2)
-                .attr("y1", -6)
-                .attr("y2", height+18)
-                .style("stroke-width", "3px") 
-                .style("stroke","#FFF");
+            dividers.map((divider,i) => {
+                var recW = xScale(divider.end) - xScale(divider.start);
+
+                chartGroup.select(".y-axis").append("rect")
+                    .attr("width", recW)
+                    .attr("height",height +1)
+                    .attr("x", xScale(divider.start))
+                    .attr("y", 0)
+                    .attr("fill","#FFF")
+
+            });
+
+            // chartGroup.select(".y-axis").append("line")
+            //     .attr("class", "closedBar")
+            //     .attr("x1", xScale(tickDates[1].endDate.getTime()) +2)
+            //     .attr("x2", xScale(tickDates[1].endDate.getTime()) +2)
+            //     .attr("y1", -6)
+            //     .attr("y2", height+18)
+            //     .style("stroke-width", "3px") 
+            //     .style("stroke","#FFF");
 
             document.querySelector("#hidden-svg path").setAttribute("d", transfersLine(data));
 
@@ -306,7 +336,7 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
                         
                         var circ = chartGroup.append("circle")
                             .attr("cx", xScale(d.utcStamp))
-                            .attr("cy", yScale(d.totalSpendAfterDeal))
+                            .attr("cy", yScale(d.totalWinSpend))
                             .attr("r", 0)
                             .style("stroke", palette.gu_sport)
                             .style("stroke-width", "1.5px")
@@ -320,14 +350,13 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
                             .attr("id", "circ_"+d.refNum)
                             .attr("class","chart-hl-circle hidden")
                             
-
                         chartGroup.append("text")
                             .text(d.playerName)
                             .attr("x", xScale(d.utcStamp))
-                            .attr("y", yScale(d.totalSpendAfterDeal))
+                            .attr("y", yScale(d.totalWinSpend))
                             .classed("country-label hidden", true)
                             .style("text-anchor", "end")
-                            .attr("dy", d.playerName === "Benjamin Mendy" ? -3 : 3 )
+                            .attr("dy", function(){ var yVal = 3; if(d.playerName === "Benjamin Mendy"){ yVal = -3 }; if(d.playerName === "Bernardo Silva"){ yVal = 12 }; return yVal })
                             .attr("dx", -8)
                             .attr("id", "label_"+d.refNum)
                             .style("font-family","'Guardian Text Sans Web',sans-serif")
@@ -504,9 +533,55 @@ function formatAbbreviation(x) {
               return (v >= .9995e9 ? formatBillion
                   : v >= .9995e6 ? formatMillion
                   : formatThousand)(x);
-            } 
+} 
+
+
+function setClubWindowData(data){
+    var winData = groupBy(data, 'transferWindow');
+    winData = sortByKeys(winData);
+
+    winData.forEach((win, key) => {
+            if(win.sortOn == "jan2017"){
+                win.sellData = groupBy(win.objArr, 'What was the previous club?');
+                //addAreaChart(win, tickDates[0], "win1");
+            }
+
+            if(win.sortOn == "summer2017"){
+                win.sellData = groupBy(win.objArr, 'What was the previous club?');
+                //addAreaChart(win, tickDates[1], "win2");
+            }
+
+            if(win.sortOn == "jan2018"){
+                win.sellData = getSellData(win.objArr)
+                
+                //addAreaChart(win, tickDates[2], "win3");
+            }
+               
+        });
+}
+
+
+function getSellData(dataIn){
+    var sellData = groupBy(dataIn, 'What was the previous club?');
+    sellData = sortByKeys(sellData);
+           
+            sellData.forEach((team) => {
+                team.totalSell = 0;          
+                team.objArr.map((player,i) => {
+                    team.totalSell += player.longFee;
+                })               
+            });
+
+        sellData = sellData.sort((a, b) => b.totalSell - a.totalSell);
+
+       // console.log(sellData)
+
+    return sellData;
+}
 
 function setBarChartData(data){
+
+            setClubWindowData(data)
 
             var sellData = data.filter(transfer => transfer.selectLeagueSale);
   
@@ -716,9 +791,10 @@ function stackedBarView(data, tgtSlot){
 
 
 function setWindowAreaData(data){
+
     var winData = groupBy(data, 'transferWindow');
 
-    console.log(winData);
+ //   console.log(winData);
 
     winData = sortByKeys(winData);
            
@@ -742,15 +818,13 @@ function setWindowAreaData(data){
 }
 
 function addAreaChart(winData, reqDates, tgt){
-        var maxFee = 5000000000;
+        var maxFee = 4000000000;
         var minWinDate = reqDates.startDate.getTime();
         var maxWinDate = reqDates.startDate.setMonth(reqDates.startDate.getMonth() + 5, 1);
         const containerEl = d3.select("#"+tgt);
         const svgContainerEl = d3.select("#"+tgt+" svg"); 
 
-
-
-        console.log(reqDates.startDate.setMonth(reqDates.startDate.getMonth() + 4, 1))
+        //console.log(reqDates.startDate.setMonth(reqDates.startDate.getMonth() + 4, 1))
 
         var smAreaSize = { "w": 420, "h": 140}
 
@@ -760,7 +834,7 @@ function addAreaChart(winData, reqDates, tgt){
 
         const yScale = d3.scaleLinear()
             .domain([0, maxFee])
-            .range([smAreaSize.h - 20, 0])
+            .range([smAreaSize.h, 0])
             .clamp(true);
 
         const windowLine = d3.line()
@@ -804,7 +878,6 @@ function addAreaChart(winData, reqDates, tgt){
 
         yAxisEl.call(yAxis);
 
-
         chartGroup.selectAll(".domain").remove();
 
         chartGroup.selectAll(".y-axis text").attr("x", 0).attr("dy", "-4").style("text-anchor", "start").style("font-family","'Guardian Text Sans Web',sans-serif")
@@ -833,7 +906,7 @@ function addAreaChart(winData, reqDates, tgt){
                 .text(tickTextLabels[0]).style("text-anchor", "start");
 
             chartGroup.selectAll(".x-axis .tick:nth-child(3) text")
-                .text(tickTextLabels[1]).style("text-anchor", "start");
+                .text(tickTextLabels[1]).style("text-anchor", "start").style("transform", "translateX(" + xScale(dividers[1].end) + "px)");
 
             chartGroup.selectAll(".x-axis .tick:nth-child(5) text")
                 .text(tickTextLabels[2]).style("text-anchor", "start");

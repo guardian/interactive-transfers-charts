@@ -108,7 +108,7 @@ $light_neutral: "#EFEFEF";
 
 
 .interactive-chart {
-    height: 900vh;
+    height: 1100vh;
     position: relative;
     //margin-bottom: 60px;
 
@@ -183,37 +183,26 @@ $light_neutral: "#EFEFEF";
                 //margin-top: -100px;
             }
 
+             &.player-1471{
+                    margin-top:98px;
+                }
+
             overflow:hidden;
         }
 
-        .img-spot:before{
-            content:'';
-            position:absolute;
-            top:0;
-            left:0;
-            width:90px;
-            height:90px;
-            margin:15px;
-            background-color:#00b2ff;
-            border-radius: 300px;
-            z-index: -1;
-            @include mq(desktop){
-                width:360px;
-                height:360px;
-                left:-60px;
-                top: -60px;
-            }
-        }
+        
         .img-spot{
             width:120px;
-            height:120px;
+            height:135px;
             position:absolute;
             background-repeat: no-repeat;
             background-size: contain;
-
+            left: 60px;
             @include mq(desktop){
-                width:300px;
-                height:300px;
+                    top:-30px;
+                    left: 90px;
+                    width: 180px;
+                    height: 200px;
             }
         }
         .factbox{
@@ -222,11 +211,16 @@ $light_neutral: "#EFEFEF";
             background-color:#ffff33;
             padding: 6px;
             margin:10px 0 0 120px;
+            z-index:-2;
 
             @include mq(desktop){
                 width: 300px;
-                margin:120px 0 0 240px;
+                padding-left:160px;
+                margin:0 0 0 90px;
+
             }
+
+            
 
             .factname{
                 font-family:$f-sans-serif-text;
@@ -234,14 +228,37 @@ $light_neutral: "#EFEFEF";
                 line-height: 14px;
                 font-weight: 900;
               @include mq(desktop){  
-                    // font-family: "Guardian Egyptian Web", Georgia, serif;
-                    // font-weight: 900;
-                    // font-size: 18px;
-                    // line-height: 18px;
+                   font-family: "Guardian Egyptian Web", Georgia, serif;
+                    
+                        font-size: 24px;
+                        line-height: 18px;
+                        font-weight: 900;
+                        width: 100%;
+                        border-top: 1px solid;
+                        padding-top: 8px;
                 }
                
                 width:100%;
             }
+
+        .img-spot-bg{
+          
+            position:absolute;
+            top:0;
+            left:0;
+            width:90px;
+            height:90px;
+            margin:15px;
+            background-color:#00b2ff;
+            border-radius: 300px;
+            // z-index: -1;
+            @include mq(desktop){
+                width:120px;
+                height:120px;
+                left:90px;
+                top: -10px;
+            }
+        }
 
             .factline, .factdate{
                 font-family:$f-sans-serif-text;
@@ -330,10 +347,7 @@ $light_neutral: "#EFEFEF";
 
      svg{
         width:100%;
-     }
-
-    
-        
+     }       
 
 }
 
