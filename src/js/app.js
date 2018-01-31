@@ -346,7 +346,7 @@ var prevDealPos = 0;
             });
 
             
-            // setBarChartData(data);
+             setBarChartData(data);
 
             // setWindowAreaData(data);
 
@@ -606,11 +606,19 @@ function setBarChartData(data){
 
             topTenBalance = topTenBalance.sort((a, b) => b.balanceRank - a.balanceRank);
             topTenBalance = topTenBalance.reverse();
-            topTenBuy = topTenBuy.sort((a, b) => b.buyRank - a.buyRank);
+            topTenBuy = topTenBuy.sort((a, b) => a.buyRank - b.buyRank);
 
-            stackedBarView(topTenBalance,"#interactive-slot-balance");
+            topTenBalance.map((team) => {
+                console.log(team.sortOn+","+team.totalSpent+","+team.totalSell)
+            })
 
-            stackedBarView(bottomTenBalance,"#interactive-slot-spending")
+            topTenBuy.map((team) => {
+                console.log(team.sortOn+","+team.totalSpent+","+team.totalSell)
+            })
+
+            //stackedBarView(topTenBalance,"#interactive-slot-balance");
+
+            //stackedBarView(bottomTenBalance,"#interactive-slot-spending")
             //topTenBuy,, topTenSell , "remove non relevant leagues"
 
 }
