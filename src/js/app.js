@@ -118,7 +118,8 @@ var prevDealPos = 0;
 
 
 	        if( !isNaN(transfer["Price in £"]) ){
-	        	transfer.shortFee = Number(transfer["Price in £"] / 1000000);
+	        	transfer.shortFee = Number((transfer["Price in £"] / 1000000).toFixed(1));
+
 	        	transfer.longFee = Number(transfer["Price in £"]);                
 	        }
 
@@ -346,11 +347,15 @@ var prevDealPos = 0;
             });
 
             
-            setBarChartData(data);
+             //setBarChartData(data);
 
-            setWindowAreaData(data);
+            // setWindowAreaData(data);
 
-            var twoWeeks = 1000 * 60 * 60 * 24 * 14;
+            
+
+           
+
+           var twoWeeks = 1000 * 60 * 60 * 24 * 14;
 
        
             function getTransferWindow(dateIn){
@@ -361,6 +366,19 @@ var prevDealPos = 0;
                 return winStr;
             }
 
+
+             var windowData = data.filter(transfer => transfer.transferWindow);
+  
+                windowData = groupBy(windowData, 'transferWindow');
+
+                windowData = sortByKeys(windowData);
+
+                console.log(windowData)
+
+                windowData.forEach((windo) => {
+                    setBarChartData(windo.objArr, windo.sortOn)               
+                });
+
             transfersLineElDashed
                 .style("stroke-dasharray", lineLength)
                 .style("stroke-dashoffset", lineLength);
@@ -369,6 +387,143 @@ var prevDealPos = 0;
           
 
  })
+
+
+function setBarChartData(data, ident){
+
+            var sellData = data.filter(transfer => transfer.selectLeagueSale);
+  
+            sellData = groupBy(sellData, 'What was the previous club?');
+
+            sellData = sortByKeys(sellData);
+           
+            sellData.forEach((team) => {
+                team.totalSell = 0;          
+                team.objArr.map((player,i) => {
+                    team.totalSell += player.longFee;
+                })               
+            });
+
+            sellData = sellData.sort((a, b) => b.totalSell - a.totalSell);
+
+            sellData.forEach((team,i) => {
+                team.sellRank = i+1;
+                //if(team.sortOn == "Monaco"){ console.log(team); } 
+            });
+
+            
+            // var buyData = data.filter(function(transfer) {
+            //     return transfer.selectLeagueBuy = true;
+            // });
+
+            var buyData = data.filter(transfer => transfer.selectLeagueBuy);          
+
+            buyData = groupBy(buyData, 'What is the new club?');
+
+            buyData = sortByKeys(buyData);
+           
+            buyData.forEach((team) => {
+                team.totalSpent = 0;               
+                team.objArr.map((player,i) => {
+                    team.totalSpent += player.longFee;   
+                })
+            });
+
+            buyData = buyData.sort((a, b) => b.totalSpent - a.totalSpent);
+
+            buyData.forEach((team,i) => { 
+                team.buyRank = i+1; 
+            });
+
+
+            var allTransferData = [];
+
+            allTransferData = buyData;
+
+            console.log(buyData)
+
+            allTransferData.forEach((team,i) => { 
+                team.playersIn = team.objArr;
+
+                 sellData.forEach((sellTeam) => {
+                    if(sellTeam.sortOn === team.sortOn){
+                        team.playersOut = sellTeam.objArr;
+                        team.totalSell = sellTeam.totalSell;
+                        team.sellRank = sellTeam.sellRank; 
+                    }
+                 })
+
+                 team.transferBalance = team.totalSell - team.totalSpent;
+
+                 if(isNaN(team.transferBalance)){ team.transferBalance = 0 }
+
+            });          
+
+            allTransferData = allTransferData.sort((a, b) => b.transferBalance - a.transferBalance);
+
+            
+
+            console.log("------------surpluses ---- "+ident);
+            allTransferData.forEach((team,i) => { 
+                team.balanceRank = i+1;
+                if(i < 6){
+                   console.log(team.sortOn+","+team.totalSpent+","+team.totalSell) 
+                }
+                
+
+
+            })
+
+
+            var tempArr = allTransferData.reverse();
+
+            var bottomTenBalance = tempArr.slice(0, 10);
+
+            //console.log(bottomTenBalance.length, bottomTenBalance);
+
+            var topTenBuy = [], topTenDeficit = [], topTenSell = [], topTenSurplus = [];
+
+            allTransferData.forEach((team,i) => { 
+
+                    if(team.balanceRank < 6){ topTenDeficit.push(team)}
+                    if(team.sellRank < 6){ topTenSell.push(team)}
+                    if(team.buyRank < 6){ topTenBuy.push(team)}
+            })
+
+
+            console.log("------------deficits ---- "+ident);
+            allTransferData.forEach((team,i) => { 
+                team.balanceRank = i+1;
+                if(i < 6){
+                   console.log(team.sortOn+","+team.totalSpent+","+team.totalSell) 
+                }
+         
+
+            })
+
+
+            topTenDeficit = topTenDeficit.sort((a, b) => a.balanceRank - b.balanceRank);
+            topTenSurplus = topTenDeficit.reverse();
+            //topTenBuy = topTenBuy.sort((a, b) => a.buyRank - b.buyRank);
+            //console.log("----------------------------"+ident+" top deficits-----  ");
+
+            topTenDeficit.map((team) => {
+                //console.log(team.sortOn+","+team.totalSpent+","+team.totalSell)
+            })
+
+
+            //console.log("----------------------------"+ident+" top surpluses")
+
+            topTenSurplus.map((team) => {
+                //console.log(team.sortOn+","+team.totalSpent+","+team.totalSell)
+            })
+
+            //stackedBarView(topTenBalance,"#interactive-slot-balance");
+
+            //stackedBarView(bottomTenBalance,"#interactive-slot-spending")
+            //topTenBuy,, topTenSell , "remove non relevant leagues"
+
+}
 
 
 function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl) {
@@ -514,106 +669,7 @@ function formatAbbreviation(x) {
                   : formatThousand)(x);
             } 
 
-function setBarChartData(data){
 
-            var sellData = data.filter(transfer => transfer.selectLeagueSale);
-  
-            sellData = groupBy(sellData, 'What was the previous club?');
-
-            sellData = sortByKeys(sellData);
-           
-            sellData.forEach((team) => {
-                team.totalSell = 0;          
-                team.objArr.map((player,i) => {
-                    team.totalSell += player.longFee;
-                })               
-            });
-
-            sellData = sellData.sort((a, b) => b.totalSell - a.totalSell);
-
-            sellData.forEach((team,i) => {
-                team.sellRank = i+1;
-                //if(team.sortOn == "Monaco"){ console.log(team); } 
-            });
-
-            
-            // var buyData = data.filter(function(transfer) {
-            //     return transfer.selectLeagueBuy = true;
-            // });
-
-            var buyData = data.filter(transfer => transfer.selectLeagueBuy);          
-
-            buyData = groupBy(buyData, 'What is the new club?');
-
-            buyData = sortByKeys(buyData);
-           
-            buyData.forEach((team) => {
-                team.totalSpent = 0;               
-                team.objArr.map((player,i) => {
-                    team.totalSpent += player.longFee;   
-                })
-            });
-
-            buyData = buyData.sort((a, b) => b.totalSpent - a.totalSpent);
-
-            buyData.forEach((team,i) => { 
-                team.buyRank = i+1; 
-            });
-
-
-            var allTransferData = [];
-
-            allTransferData = buyData;
-
-            allTransferData.forEach((team,i) => { 
-                team.playersIn = team.objArr;
-
-                 sellData.forEach((sellTeam) => {
-                    if(sellTeam.sortOn === team.sortOn){
-                        team.playersOut = sellTeam.objArr;
-                        team.totalSell = sellTeam.totalSell;
-                        team.sellRank = sellTeam.sellRank; 
-                    }
-                 })
-
-                 team.transferBalance = team.totalSell - team.totalSpent;
-
-                 if(isNaN(team.transferBalance)){ team.transferBalance = 0 }
-
-            });          
-
-            allTransferData = allTransferData.sort((a, b) => b.transferBalance - a.transferBalance);
-
-            allTransferData.forEach((team,i) => { 
-                team.balanceRank = i+1;
-            })
-
-
-            var tempArr = allTransferData.reverse();
-
-            var bottomTenBalance = tempArr.slice(0, 10);
-
-            //console.log(bottomTenBalance.length, bottomTenBalance);
-
-            var topTenBuy = [], topTenBalance = [], topTenSell = [];
-
-            allTransferData.forEach((team,i) => { 
-                    if(team.balanceRank < 11){ topTenBalance.push(team)}
-                    if(team.sellRank < 11){ topTenSell.push(team)}
-                    if(team.buyRank < 11){ topTenBuy.push(team)}
-            })
-
-
-            topTenBalance = topTenBalance.sort((a, b) => b.balanceRank - a.balanceRank);
-            topTenBalance = topTenBalance.reverse();
-            topTenBuy = topTenBuy.sort((a, b) => b.buyRank - a.buyRank);
-
-            stackedBarView(topTenBalance,"#interactive-slot-balance");
-
-            stackedBarView(bottomTenBalance,"#interactive-slot-spending")
-            //topTenBuy,, topTenSell , "remove non relevant leagues"
-
-}
 
 
 function stackedBarView(data, tgtSlot){
