@@ -193,7 +193,7 @@ var prevDealPos = 0;
 
         const yScale = d3.scaleLinear()
             .domain([0, grandTotalFee])
-            .range([height - chartMargin.top - chartMargin.bottom, 0])
+            .range([height, 0])
             .clamp(true);
 
             const svgContainerEl = d3.select(".interactive-chart svg"); 
@@ -288,20 +288,20 @@ var prevDealPos = 0;
 
             chartGroup.select(".y-axis").append("line")
                 .attr("class", "closedBar")
-                .attr("x1", xScale(tickDates[0].endDate.getTime()))
-                .attr("x2", xScale(tickDates[0].endDate.getTime()))
+                .attr("x1", xScale(tickDates[0].endDate.getTime()) +6)
+                .attr("x2", xScale(tickDates[0].endDate.getTime()) +6)
                 .attr("y1", -6)
-                .attr("y2", height+18)
-                .style("stroke-width", "3px") 
+                .attr("y2", height+2)
+                .style("stroke-width", "10px") 
                 .style("stroke","#FFF");
 
             chartGroup.select(".y-axis").append("line")
                 .attr("class", "closedBar")
-                .attr("x1", xScale(tickDates[1].endDate.getTime()) +2)
-                .attr("x2", xScale(tickDates[1].endDate.getTime()) +2)
+                .attr("x1", xScale(tickDates[1].endDate.getTime()) +6)
+                .attr("x2", xScale(tickDates[1].endDate.getTime()) +6)
                 .attr("y1", -6)
-                .attr("y2", height+18)
-                .style("stroke-width", "3px") 
+                .attr("y2", height+2)
+                .style("stroke-width", "10px") 
                 .style("stroke","#FFF");
 
             document.querySelector("#hidden-svg path").setAttribute("d", transfersLine(data));
