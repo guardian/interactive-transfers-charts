@@ -204,7 +204,7 @@ $light_neutral: "#EFEFEF";
             @include mq(desktop){
                     display:block;
                     top:-30px;
-                    left: 90px;
+                    left: 50px;
                     width: 180px;
                     height: 200px;
             }
@@ -221,7 +221,7 @@ $light_neutral: "#EFEFEF";
             @include mq(desktop){
                 width: 240px;
                 padding-left:160px;
-                margin:0 0 0 90px;
+                margin:0 0 0 45px;
 
             }
 
@@ -263,7 +263,7 @@ $light_neutral: "#EFEFEF";
                 display:block;
                 width:120px;
                 height:120px;
-                left:90px;
+                left:50px;
                 top: -3px;
             }
         }
