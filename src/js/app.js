@@ -351,9 +351,6 @@ var prevDealPos = 0;
 
             // setWindowAreaData(data);
 
-            
-
-           
 
            var twoWeeks = 1000 * 60 * 60 * 24 * 14;
 
