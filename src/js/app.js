@@ -75,7 +75,6 @@ const maxSumFee = 300000000; //300m
 
 var dividers = []
 
-
 var prevDealPos = 0;
 
 const dateScale = scaleDiscontinuous(d3.scaleLinear())

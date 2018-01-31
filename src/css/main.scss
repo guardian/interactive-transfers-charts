@@ -129,7 +129,7 @@ $light_neutral: "#EFEFEF";
     }
 
     svg line{
-    	 shape-rendering: optimizeSpeed !important;
+         shape-rendering: optimizeSpeed !important;
     }
 
     .x-axis path, .x-axis line, .y-axis path, .y-axis line {
@@ -192,31 +192,36 @@ $light_neutral: "#EFEFEF";
 
         
         .img-spot{
-            width:120px;
-            height:135px;
             position:absolute;
+            width:80px;
+            height:100px;
+            top: 10px;
+            left: 15px;
             background-repeat: no-repeat;
-            background-size: contain;
-            left: 60px;
+            background-size:contain;
+            display:none;
+            
             @include mq(desktop){
+                    display:block;
                     top:-30px;
-                    left: 90px;
+                    left: 50px;
                     width: 180px;
                     height: 200px;
             }
         }
         .factbox{
             display: block;
-            width: 160px;
+            width: 100px;
             background-color:#ffff33;
             padding: 6px;
-            margin:10px 0 0 120px;
+            margin:10px 0 0 0px;
             z-index:-2;
 
+
             @include mq(desktop){
-                width: 300px;
+                width: 240px;
                 padding-left:160px;
-                margin:0 0 0 90px;
+                margin:0 0 0 45px;
 
             }
 
@@ -225,7 +230,9 @@ $light_neutral: "#EFEFEF";
             .factname{
                 font-family:$f-sans-serif-text;
                 font-size: 14px;
-                line-height: 14px;
+                line-height: 12px;
+                border-top: 1px solid;
+                padding-top: 5px;
                 font-weight: 900;
               @include mq(desktop){  
                    font-family: "Guardian Egyptian Web", Georgia, serif;
@@ -242,7 +249,6 @@ $light_neutral: "#EFEFEF";
             }
 
         .img-spot-bg{
-          
             position:absolute;
             top:0;
             left:0;
@@ -251,21 +257,26 @@ $light_neutral: "#EFEFEF";
             margin:15px;
             background-color:#00b2ff;
             border-radius: 300px;
+            display:none;
             // z-index: -1;
             @include mq(desktop){
+                display:block;
                 width:120px;
                 height:120px;
-                left:90px;
-                top: -10px;
+                left:50px;
+                top: -3px;
             }
         }
 
             .factline, .factdate{
                 font-family:$f-sans-serif-text;
-                font-size: 14px;
+                font-size: 12px;
                 line-height: 14px;
-                height:18px;
+                height:auto;
                 @include mq(desktop){
+                    font-size: 14px;
+                    line-height: 14px;
+                    height:18px;
                     // font-family: "Guardian Egyptian Web", Georgia, serif;
                     // font-weight: 400;
                     // font-size: 18px;
