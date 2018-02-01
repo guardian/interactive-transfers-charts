@@ -77,10 +77,9 @@ var dividers = []
 
 var prevDealPos = 0;
 
-const dateScale = scaleDiscontinuous(d3.scaleLinear())
-    .discontinuityProvider(discontinuityRange([closedStartsI, closedEndsI], [closedStartsII, closedEndsII]))
+const dateScale = d3.scaleLinear()
     .domain([minDate, maxDate])
-    .range([0, interactiveChartEl.offsetHeight]);
+    .range([0, interactiveChartEl.offsetHeight - height]);
 
 
  Promise.all([
@@ -125,7 +124,10 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
 
 
 	        if( !isNaN(transfer["Price in £"]) ){
+                //transfer.sortFee = Number(transfer["Price in £"] / 1000000).toFixed(1);
 	        	transfer.shortFee = Number(transfer["Price in £"] / 1000000);
+                transfer.shortFee = Math.round(transfer.shortFee * 10);
+                transfer.shortFee = transfer.shortFee/10;
 	        	transfer.longFee = Number(transfer["Price in £"]);                
 	        }
 
@@ -138,7 +140,7 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
             let announceDate =  transfer['On what date was the transfer announced?'].split("/");
             announceDate =  new Date(announceDate[1]+"/"+announceDate[0]+"/"+announceDate[2]);
 
-            console.log(announceDate)
+       
 
 	        let tempdateStamp = new Date(tempDateArr[1]+"/"+tempDateArr[0]+"/"+tempDateArr[2]);
 
@@ -165,22 +167,21 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
 	        	console.log("ERROR", transfer['Player name'],transfer.Timestamp )
 	        }
 
-            if(transfer.longFee > bigDealThreshold || transfer.playerName == "Bernardo Silva" || transfer.playerName == "Ederson" || transfer.playerName == "Corentin Tolisso" ){
+            if(transfer.longFee > bigDealThreshold || transfer.playerName == "Bernardo Silva" ){
                 transfer.bigDeal = true;
                 transfer.newClub = transfer['What is the new club?'];
                 transfer.prevClub = transfer['What was the previous club?'];
-                transfer.dateVal = {day: transfer.dateStamp.getDay() , month: monthStrings[transfer.dateStamp.getMonth()],  year: transfer.dateStamp.getFullYear()}
+                transfer.dateVal = {day: transfer.dateStamp.getDate() , month: monthStrings[transfer.dateStamp.getMonth()],  year: transfer.dateStamp.getFullYear()}
                 transfer.imgPath = process.env.PATH+'/assets/cutouts/'+transfer.refNum+'.png';
                 transfer.dealPos = dateScale(transfer.utcStamp);
                 
-                if ((prevDealPos+220) > transfer.dealPos){
-                    transfer.dealPos = prevDealPos+220;
+                if ((prevDealPos + 220) > transfer.dealPos){
+                    transfer.dealPos = prevDealPos + 220;
                 }
+
                 prevDealPos = transfer.dealPos;
-                // if(prevDealPos) {  }
-                // 
-                //var jsPath = process.env.PATH;
                 parasObj.objArr.push(transfer);
+                
             }
 	    })
     
@@ -194,9 +195,11 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
         });
 
         // Sum the array's values from left to right
-        var grandTotalFee = allFees.reduce(function(prev, curr) {
-            return prev + curr;
-        });
+        // var grandTotalFee = allFees.reduce(function(prev, curr) {
+        //     return prev + curr;
+        // });
+
+        var grandTotalFee = 4000000000;
 
         // console.log(formatAbbreviation(grandTotalFee))
 		var maxFee = grandTotalFee;
@@ -277,17 +280,20 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
                 .style("font-size","13px")
                 .style("font-weight", "700" )
                 .attr("dy","15px")
-                .attr("dx","6px")
                 .style("fill", "#333")
 
             chartGroup.selectAll(".x-axis .tick:first-of-type text")
-                .text(tickTextLabels[0]).style("text-anchor", "start");
+                .text(tickTextLabels[0]).style("text-anchor", "start").attr("dx","0px");
+
+                var tickDXVal;
+
+                !isMobile ? tickDXVal = 20 : tickDXVal = 5;
 
             chartGroup.selectAll(".x-axis .tick:nth-child(3) text")
-                .text(tickTextLabels[1]).style("text-anchor", "start");
+                .text(tickTextLabels[1]).style("text-anchor", "start").attr("dx",tickDXVal+"px");
 
             chartGroup.selectAll(".x-axis .tick:nth-child(5) text")
-                .text(tickTextLabels[2]).style("text-anchor", "start");
+                .text(tickTextLabels[2]).style("text-anchor", "start").attr("dx",tickDXVal+"px");
 
             chartGroup.selectAll(".y-axis .tick:first-of-type")
                 .style("display", "none"); 
@@ -309,7 +315,7 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
                 var recW = xScale(divider.end) - xScale(divider.start);
 
                 chartGroup.select(".y-axis").append("rect")
-                    .attr("width", recW)
+                    .attr("width", recW + 0.5)
                     .attr("height",height +1)
                     .attr("x", xScale(divider.start))
                     .attr("y", 0)
@@ -357,7 +363,7 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
                             .attr("y", yScale(d.totalWinSpend))
                             .classed("country-label hidden", true)
                             .style("text-anchor", "end")
-                            .attr("dy", function(){ var yVal = 3; if(d.playerName === "Benjamin Mendy"){ yVal = -3 }; if(d.playerName === "Bernardo Silva"){ yVal = 12 }; return yVal })
+                            .attr("dy", function(){ var yVal = 3; if(d.playerName === "Benjamin Mendy"){ yVal = -3 }; if(d.playerName === "Bernardo Silva"){ yVal = -3 }; return yVal })
                             .attr("dx", -8)
                             .attr("id", "label_"+d.refNum)
                             .style("font-family","'Guardian Text Sans Web',sans-serif")
@@ -386,11 +392,18 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
             transfersLineElDashed
                 .style("stroke-dasharray", lineLength)
                 .style("stroke-dashoffset", lineLength);
+
+            positionParas(lineLength);    
             
             checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl);
           
 
  })
+
+
+function positionParas(lineLength){
+    console.log("lineLength", lineLength);
+}
 
 
 function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl) {
@@ -421,6 +434,8 @@ function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveCha
             var scrollToUse = scroll - elOffset;
             var scrollDepth = 1.1 * (scrollToUse / (elHeight - height));
 
+            if(scrollDepth > 0.63 && scrollDepth < 0.87){ scrollDepth = 0.88  }
+
             doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl);
         }
 
@@ -445,6 +460,8 @@ function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveCha
 
             var scrollToUse = scroll - elOffset;
             var scrollDepth = 1.1 * (scrollToUse / (elHeight - height)); 
+
+            if(scrollDepth > 0.63 && scrollDepth < 0.87){ scrollDepth = 0.88  }
 
             doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl);
 
@@ -476,7 +493,7 @@ function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContai
 
     var pt = transfersLineElDashed.node().getPointAtLength(lineLength - draw);
 
-    checkCircles(pt, lineLength - draw)
+    checkCircles(pt, lineLength - draw);
 
     transfersLineElDashed
         .transition().duration(2500 * depthChange).style("stroke-dashoffset", draw)
@@ -900,11 +917,11 @@ function addAreaChart(winData, reqDates, tgt){
                 .style("font-size","13px")
                 .style("font-weight", "700" )
                 .attr("dy","15px")
-                .attr("dx","6px")
+                .attr("dx","20px")
                 .style("fill", "#333")
 
             chartGroup.selectAll(".x-axis .tick:first-of-type text")
-                .text(tickTextLabels[0]).style("text-anchor", "start");
+                .text(tickTextLabels[0]).style("text-anchor", "start").attr("dx","0px");
 
             chartGroup.selectAll(".x-axis .tick:nth-child(3) text")
                 .text(tickTextLabels[1]).style("text-anchor", "start").style("transform", "translateX(" + xScale(dividers[1].end) + "px)");

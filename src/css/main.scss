@@ -108,7 +108,7 @@ $light_neutral: "#EFEFEF";
 
 
 .interactive-chart {
-    height: 1100vh;
+    height: 1300vh;
     position: relative;
     //margin-bottom: 60px;
 
@@ -155,15 +155,13 @@ $light_neutral: "#EFEFEF";
             left: -20px;
         }
 
-        //display:none;
-        .text-wrapper {
-            // margin-bottom: 60vh;
 
-            height: 140px;
+        .text-wrapper {          
             position: absolute;
+            height: 160px;
             @include mq(tablet) {
                 //width: 620px;
-                height:400px;
+                height:300px;
             }
             @include mq(leftCol) {
                 //margin-left: 60px;
@@ -230,7 +228,7 @@ $light_neutral: "#EFEFEF";
             .factname{
                 font-family:$f-sans-serif-text;
                 font-size: 14px;
-                line-height: 12px;
+                line-height: 16px;
                 border-top: 1px solid;
                 padding-top: 5px;
                 font-weight: 900;
@@ -238,11 +236,11 @@ $light_neutral: "#EFEFEF";
                    font-family: "Guardian Egyptian Web", Georgia, serif;
                     
                         font-size: 24px;
-                        line-height: 18px;
+                        line-height: 24px;
                         font-weight: 900;
                         width: 100%;
                         border-top: 1px solid;
-                        padding-top: 8px;
+                        padding-top: 2px;
                 }
                
                 width:100%;
