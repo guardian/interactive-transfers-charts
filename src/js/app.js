@@ -34,9 +34,9 @@ const selectedLeagues = ["Premier League","La Liga","Ligue 1","Serie A","Bundesl
 const tickTextLabelsLong = ["January 2017 transfer window","Summer 2017","January 2018"];
 const tickTextLabelsShort = ["Jan 2017","Summer 2017","Jan 2018"];
 
-const tickDates = [ {startDate:  new Date("Dec 10 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Feb 01 2017 23:58:00 GMT (GMT)")}, {startDate:  new Date("May 1 2017 00:00:00 GMT (GMT)"), endDate:  new Date("Sep 5 2017 00:30:00 GMT (GMT)")}, {startDate:  new Date("Nov 15 2017 00:20:00 GMT (GMT)"), endDate: new Date("Feb 15 2018 00:00:00 GMT (GMT)")} ]
+const tickDates = [ {startDate:  new Date("Nov 20 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Feb 02 2017 23:58:00 GMT (GMT)")}, {startDate:  new Date("Apr 03 2017 00:00:00 GMT (GMT)"), endDate:  new Date("Sep 3 2017 00:30:00 GMT (GMT)")}, {startDate:  new Date("Dec 13 2017 00:20:00 GMT (GMT)"), endDate: new Date("Feb 5 2018 00:00:00 GMT (GMT)")} ]
 
-var minDate = tickDates[0].startDate.getTime();
+var minDate = tickDates[0].startDate.getTime() ;
 var maxDate = tickDates[2].endDate.getTime();
 
 var closedStartsI = tickDates[0].endDate.getTime();
@@ -134,12 +134,17 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
 	        	transfer.longFee = 0;
 	        }
 
-	        let tempDateArr = transfer.Timestamp.split("/");       
+	        let tempDateArr = transfer.Timestamp.split("/"); 
+            let announceDate =  transfer['On what date was the transfer announced?'].split("/");
+            announceDate =  new Date(announceDate[1]+"/"+announceDate[0]+"/"+announceDate[2]);
+
+            console.log(announceDate)
+
 	        let tempdateStamp = new Date(tempDateArr[1]+"/"+tempDateArr[0]+"/"+tempDateArr[2]);
 
 	        if(!isNaN(tempdateStamp)){
-	        	transfer.dateStamp = tempdateStamp;
-	        	transfer.utcStamp = tempdateStamp.getTime();
+	        	transfer.dateStamp = announceDate;
+	        	transfer.utcStamp = announceDate.getTime();
                 transfer.transferWindow = getTransferWindow(transfer.dateStamp); 
 	        }
 
@@ -178,9 +183,6 @@ const dateScale = scaleDiscontinuous(d3.scaleLinear())
                 parasObj.objArr.push(transfer);
             }
 	    })
-
-
-        var transData = data.filter(transfer => transfer.selectLeagueBuy);  
     
         var paraHTML = addParas(parasObj);
 
