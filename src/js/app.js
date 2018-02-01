@@ -33,7 +33,7 @@ const formatNumber = d3.format(".0f"),
 const selectedLeagues = ["Premier League","La Liga","Ligue 1","Serie A","Bundesliga"];
 const tickTextLabelsLong = ["January 2017","Summer 2017","January 2018"];
 const tickTextLabelsShort = ["Jan 2017","Summer 2017","Jan 2018"];
-const tickDates = [ {startDate:  new Date("Dec 10 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Feb 01 2017 23:58:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Oct 20 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Jan 31 2018 00:00:00 GMT (GMT)")} ]
+const tickDates = [ {startDate:  new Date("Dec 10 2016 00:00:00 GMT (GMT)"), endDate:  new Date("Feb 01 2017 23:58:00 GMT (GMT)")}, {startDate:  new Date("May 15 2017 00:00:00 GMT+0100 (BST)"), endDate:  new Date("Oct 20 2017 00:00:00 GMT+0100 (BST)")}, {startDate:  new Date("Dec 15 2017 00:00:00 GMT (GMT)"), endDate: new Date("Feb 1 2018 00:00:00 GMT (GMT)")} ]
 const windowClosureDates = [ {startDate: new Date("Feb 1 2017 23:59:00 GMT (GMT)"), endDate: new Date("May 14 2017 23:59:00 GMT (GMT)")}, {startDate:  new Date("Sep 1 2017 00:01:00 GMT+0100 (BST)"), endDate:  new Date("Dec 14 2017 23:59:00 GMT (GMT)")} ];
 
 var minDate = tickDates[0].startDate.getTime();
@@ -165,6 +165,8 @@ var prevDealPos = 0;
                 // 
                 //var jsPath = process.env.PATH;
                 parasObj.objArr.push(transfer);
+
+                console.log(transfer)
             }
 	    })
     
@@ -434,11 +436,13 @@ function setBarChartData(data, ident){
                 team.buyRank = i+1; 
             });
 
+            console.log(buyData)
+
 
             var allTransferData = [];
 
             allTransferData = buyData;
-
+console.log("buyData")
             console.log(buyData)
 
             allTransferData.forEach((team,i) => { 
@@ -460,10 +464,26 @@ function setBarChartData(data, ident){
 
             allTransferData = allTransferData.sort((a, b) => b.transferBalance - a.transferBalance);
 
+           // console.log(allTransferData)
+
             allTransferData.forEach((team,i) => { 
                 team.balanceRank = i+1;
             })
+            var topTenBuy = [], topTenDeficit = [], topTenSell = [], topTenSurplus = [];
 
+
+
+            allTransferData.forEach((team,i) => { 
+
+                //team.balanceRank = i+1;
+                if(team.balanceRank > allTransferData.length-11 ){ topTenDeficit.push(team)}
+            })
+            topTenDeficit.reverse();
+            console.log("----------------------------"+ident+" top deficits")
+
+            topTenDeficit.map((team) => {
+                console.log(team.sortOn+","+team.totalSpent+","+team.totalSell)
+            })
 
             var tempArr = allTransferData.reverse();
 
@@ -471,31 +491,27 @@ function setBarChartData(data, ident){
 
             //console.log(bottomTenBalance.length, bottomTenBalance);
 
-            var topTenBuy = [], topTenDeficit = [], topTenSell = [], topTenSurplus = [];
-
+            
             allTransferData.forEach((team,i) => { 
 
-                    if(team.balanceRank < 6){ topTenDeficit.push(team)}
+                    if(team.balanceRank < 11){ topTenSurplus.push(team)}
                     if(team.sellRank < 6){ topTenSell.push(team)}
                     if(team.buyRank < 6){ topTenBuy.push(team)}
+
             })
 
 
-            topTenDeficit = topTenDeficit.sort((a, b) => a.balanceRank - b.balanceRank);
-            topTenSurplus = topTenDeficit.reverse();
+            topTenSurplus = topTenSurplus.sort((a, b) => a.balanceRank - b.balanceRank);
+            
             //topTenBuy = topTenBuy.sort((a, b) => a.buyRank - b.buyRank);
-            console.log("----------------------------"+ident+" top deficits-----  ");
-
-            topTenDeficit.map((team) => {
-                console.log(team.sortOn+","+team.totalSpent+","+team.totalSell)
-            })
-
-
-            console.log("----------------------------"+ident+" top surpluses")
+            console.log("----------------------------"+ident+" top surplus-----  ");
 
             topTenSurplus.map((team) => {
                 console.log(team.sortOn+","+team.totalSpent+","+team.totalSell)
             })
+
+            topTenSurplus = topTenSurplus.reverse();
+            
 
             //stackedBarView(topTenBalance,"#interactive-slot-balance");
 
