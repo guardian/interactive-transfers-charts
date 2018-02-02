@@ -187,7 +187,13 @@ const dateScale = d3.scaleLinear()
     
         var paraHTML = addParas(parasObj);
 
-        document.querySelector(".chart-text").innerHTML = paraHTML;
+
+        var winArr = groupBy(data, 'transferWindow');
+            winArr = sortByKeys(winArr);
+
+        console.log(winArr)    
+
+        //document.querySelector(".chart-text").innerHTML = paraHTML;
 
         // Get an array of checkout values only
         var allFees = data.map(function(item) {
@@ -220,6 +226,16 @@ const dateScale = d3.scaleLinear()
 
             const svgContainerEl = d3.select(".interactive-chart svg"); 
 
+            
+            const xAxis = d3.axisBottom(xScale).tickSize(0)
+                .tickValues([tickDates[0].startDate.getTime(), tickDates[0].endDate.getTime(), tickDates[1].startDate.getTime(), tickDates[1].endDate.getTime(), tickDates[2].startDate.getTime(), tickDates[2].endDate.getTime()]);
+
+            const yAxis = d3.axisLeft(yScale)
+                .tickSize(width)
+                .ticks(4).tickFormat(formatAbbreviation);
+
+            const chartGroup = svgContainerEl.append("g").style("transform", "translateY(" + chartMargin.top + "px)")
+
             const transfersLine = d3.line()
                 .x(d => xScale(d.utcStamp))
                 .y(d => yScale(d.totalWinSpend))
@@ -231,28 +247,43 @@ const dateScale = d3.scaleLinear()
                 .y1(d => yScale(d.totalWinSpend))
                 .curve(d3.curveStep);
 
-            const xAxis = d3.axisBottom(xScale).tickSize(0)
-                .tickValues([tickDates[0].startDate.getTime(), tickDates[0].endDate.getTime(), tickDates[1].startDate.getTime(), tickDates[1].endDate.getTime(), tickDates[2].startDate.getTime(), tickDates[2].endDate.getTime()]);
+            const linesObj = {totalLen:0,lineLengths: [], lineEls:[]};    
 
-            const yAxis = d3.axisLeft(yScale)
-                .tickSize(width)
-                .ticks(4).tickFormat(formatAbbreviation);
+            winArr.map((Arr) =>{
+                var count = 0
+                var id = Arr.sortOn;
+                if(id!="undefined"){
 
-            const chartGroup = svgContainerEl.append("g").style("transform", "translateY(" + chartMargin.top + "px)")
+                    var tData = Arr.objArr
+                        chartGroup.append("path")
+                            .data([tData])
+                            .attr("class", "area")                                   
+                            .style("fill", palette.gu_sport_background)
+                            .attr("d", transfersArea);    
 
-            chartGroup.append("path")
-                .data([data])
-                .attr("class", "area")                                   
-                .style("fill", palette.gu_sport_background)
-                .attr("d", transfersArea);    
+                    const transfersLineElDashed = chartGroup.append("path")
+                        .data([tData])
+                        .style("stroke", palette.gu_sport)
+                        .style("stroke-width", "1.5px")
+                        .style("fill", "none")
+                        .attr("id", "transfersLineDashed_"+id)
+                        .attr("d", transfersLine);
 
-            const transfersLineElDashed = chartGroup.append("path")
-                .data([data])
-                .style("stroke", palette.gu_sport)
-                .style("stroke-width", "1.5px")
-                .style("fill", "none")
-                .attr("id", "transfersLineDashed")
-                .attr("d", transfersLine);
+                    var lineLength = document.querySelector("#transfersLineDashed_"+id).getTotalLength();
+
+                    linesObj.lineLengths.push(lineLength);
+                    linesObj.lineEls.push(transfersLineElDashed);
+                    linesObj.totalLen+=lineLength;
+
+                    transfersLineElDashed
+                        .style("stroke-dasharray", lineLength)
+                        .style("stroke-dashoffset", lineLength);
+                }
+                
+            })
+
+ 
+            
 
             chartGroup.append("g").classed("x-axis", true).call(xAxis).style("transform", "translateY(" + height + "px)")
 
@@ -314,12 +345,12 @@ const dateScale = d3.scaleLinear()
             dividers.map((divider,i) => {
                 var recW = xScale(divider.end) - xScale(divider.start);
 
-                chartGroup.select(".y-axis").append("rect")
-                    .attr("width", recW + 0.5)
-                    .attr("height",height +1)
-                    .attr("x", xScale(divider.start))
-                    .attr("y", 0)
-                    .attr("fill","#FFF")
+                // chartGroup.select(".y-axis").append("rect")
+                //     .attr("width", recW + 0.5)
+                //     .attr("height",height +1)
+                //     .attr("x", xScale(divider.start))
+                //     .attr("y", 0)
+                //     .attr("fill","#FFF")
 
             });
 
@@ -332,11 +363,9 @@ const dateScale = d3.scaleLinear()
             //     .style("stroke-width", "3px") 
             //     .style("stroke","#FFF");
 
-            document.querySelector("#hidden-svg path").setAttribute("d", transfersLine(data));
 
-            const lineLength = document.querySelector("#transfersLineDashed").getTotalLength();
 
-            // console.log("lineLength",lineLength)
+
             
             data.forEach((d) => {
                     if (d.bigDeal) {
@@ -380,30 +409,15 @@ const dateScale = d3.scaleLinear()
 
             var twoWeeks = 1000 * 60 * 60 * 24 * 14;
 
-       
-            function getTransferWindow(dateIn){
-                var winStr;
-                if(dateIn > tickDates[0].startDate && dateIn < tickDates[0].endDate){ winStr = "jan2017" }; 
-                if(dateIn > tickDates[1].startDate && dateIn < tickDates[1].endDate){ winStr = "summer2017" }; 
-                if(dateIn > tickDates[2].startDate && dateIn < tickDates[2].endDate){ winStr = "jan2018" }; 
-                return winStr;
-            }
-
-            transfersLineElDashed
-                .style("stroke-dasharray", lineLength)
-                .style("stroke-dashoffset", lineLength);
-
-            positionParas(lineLength);    
+ 
+           // positionParas(lineLength);    
             
-            checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl);
+            checkScroll(linesObj.lineEls[0], elHeight, 1000 , interactiveChartEl, svgContainerEl);
           
 
  })
 
 
-function positionParas(lineLength){
-    console.log("lineLength", lineLength);
-}
 
 
 function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl) {
@@ -434,8 +448,6 @@ function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveCha
             var scrollToUse = scroll - elOffset;
             var scrollDepth = 1.1 * (scrollToUse / (elHeight - height));
 
-            if(scrollDepth > 0.63 && scrollDepth < 0.87){ scrollDepth = 0.88  }
-
             doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl);
         }
 
@@ -461,13 +473,11 @@ function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveCha
             var scrollToUse = scroll - elOffset;
             var scrollDepth = 1.1 * (scrollToUse / (elHeight - height)); 
 
-            
-
             doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl);
 
         }
 
-        checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl);
+
     });
 }
 
@@ -485,22 +495,16 @@ function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContai
         scrollDepth = 1;
     }
 
-   
-
     prevScrollDepth = scrollDepth;
-
-    
+   
     const depthChange = Math.abs(scrollDepth - scrollDepth);
-
-
-
 
     var draw = lineLength - (scrollDepth * lineLength); 
 
-
+    console.log("draw", draw)
 
     var pt = transfersLineElDashed.node().getPointAtLength(lineLength - draw);
-console.log("scrollDepth",pt)
+
     checkCircles(pt, lineLength - draw);
 
     transfersLineElDashed
@@ -538,6 +542,44 @@ function checkCircles(pt, draw){
 
 }
 
+
+function getTransferWindow(dateIn){
+            var winStr;
+            if(dateIn > tickDates[0].startDate && dateIn < tickDates[0].endDate){ winStr = "jan2017" }; 
+            if(dateIn > tickDates[1].startDate && dateIn < tickDates[1].endDate){ winStr = "summer2017" }; 
+            if(dateIn > tickDates[2].startDate && dateIn < tickDates[2].endDate){ winStr = "jan2018" }; 
+            return winStr;
+}
+
+function positionParas(lineLength){
+
+   // document.querySelector(".interactive-chart").style.height = lineLength - height;
+    //var containerH  = document.querySelector(".interactive-chart").offsetHeight;
+
+    const lineLenScale = d3.scaleLinear()
+    .domain([minDate, maxDate])
+    .range([0, lineLength]);
+
+    var paras = document.querySelectorAll(".text-wrapper");
+
+    var prevTopPos = 0;
+    var prevParaH = 0;
+
+    paras.forEach((para,i) => {
+        var topPos = lineLenScale(para.getAttribute("dateRef"));
+        if(topPos < prevTopPos+prevParaH){
+            topPos = prevTopPos+prevParaH+1;
+        }
+        para.style.top = topPos+"px";
+
+        if(i>0){ prevParaH = paras[i-1].offsetHeight }
+        prevTopPos = topPos
+
+    })
+
+//push paras into array and associate with date
+    console.log("lineLength", lineLength);
+}
 
 function featureTest(property, value, noPrefixes) {
         var prop = property + ':',

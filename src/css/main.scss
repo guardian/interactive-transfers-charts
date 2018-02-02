@@ -108,8 +108,21 @@ $light_neutral: "#EFEFEF";
 
 
 .interactive-chart {
-    height: 1000vh;
+    
     position: relative;
+
+    height: 400vh;
+
+    @include mq(tablet){
+        height: 480vh;
+    }
+    @include mq(desktop){
+        height: 700vh;
+    }
+
+    @include mq(wide){
+        height: 540vh;
+    }
     //margin-bottom: 60px;
 
     svg {
@@ -161,7 +174,7 @@ $light_neutral: "#EFEFEF";
             height: 160px;
             @include mq(tablet) {
                 //width: 620px;
-                height:300px;
+                height:280px;
             }
             @include mq(leftCol) {
                 //margin-left: 60px;
@@ -201,7 +214,7 @@ $light_neutral: "#EFEFEF";
             
             @include mq(desktop){
                     display:block;
-                    top:-30px;
+                    top:-10px;
                     left: 50px;
                     width: 180px;
                     height: 200px;
