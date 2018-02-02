@@ -461,7 +461,7 @@ function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveCha
             var scrollToUse = scroll - elOffset;
             var scrollDepth = 1.1 * (scrollToUse / (elHeight - height)); 
 
-            if(scrollDepth > 0.63 && scrollDepth < 0.87){ scrollDepth = 0.88  }
+            
 
             doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl);
 
@@ -478,10 +478,14 @@ function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContai
     if (scrollDepth < 0) {
         scrollDepth = 0
     }
-
+    if(scrollDepth > 0.63 && scrollDepth < 0.87){ 
+            scrollDepth = 0.88  
+    }
     if (scrollDepth > 1) {
         scrollDepth = 1;
     }
+
+   
 
     prevScrollDepth = scrollDepth;
 
@@ -489,10 +493,14 @@ function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContai
     const depthChange = Math.abs(scrollDepth - scrollDepth);
 
 
-    var draw = lineLength - (scrollDepth * lineLength);
+
+
+    var draw = lineLength - (scrollDepth * lineLength); 
+
+
 
     var pt = transfersLineElDashed.node().getPointAtLength(lineLength - draw);
-
+console.log("scrollDepth",pt)
     checkCircles(pt, lineLength - draw);
 
     transfersLineElDashed
