@@ -181,17 +181,17 @@ const dateScale = d3.scaleLinear()
                 transfer.imgPath = process.env.PATH+'/assets/cutouts/'+transfer.refNum+'.png';
                 transfer.dealPos = dateScale(transfer.utcStamp);
 
-
-
-
-                 if (transfer.transferWindow == "summer2017"){
-                    transfer.dealPos = transfer.dealPos - shimVal;
+                if (transfer.transferWindow == "summer2017"){
+                    transfer.dealPos = transfer.dealPos - shimVal*2.5;
                 }
+
+                if (transfer.transferWindow == "jan2018"){
+                    transfer.dealPos = transfer.dealPos - shimVal*0.5;
+                }
+
                 if ((prevDealPos + shimVal) > transfer.dealPos){
                     transfer.dealPos = prevDealPos + shimVal;
                 }
-
-               
 
                 prevDealPos = transfer.dealPos;
                 parasObj.objArr.push(transfer);
