@@ -171,6 +171,8 @@ const dateScale = d3.scaleLinear()
 
             if (isMobile){ shimVal = 140 }
 
+            if (isMobile && transfer['Player name']=="Pierre-Emerick Aubameyang") { shimVal = 160 }   
+
                 console.log(shimVal)
 
             if(transfer.longFee > bigDealThreshold || transfer.playerName == "Bernardo Silva" ){
