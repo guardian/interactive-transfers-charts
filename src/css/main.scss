@@ -108,9 +108,13 @@ $light_neutral: "#EFEFEF";
 
 
 .interactive-chart {
-    height: 1000vh;
+    height: 750vh;
     position: relative;
     //margin-bottom: 60px;
+
+    @include mq(desktop){
+         height: 600vh;
+    }
 
     svg {
         position: -webkit-sticky;

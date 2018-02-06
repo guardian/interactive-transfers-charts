@@ -167,6 +167,12 @@ const dateScale = d3.scaleLinear()
 	        	console.log("ERROR", transfer['Player name'],transfer.Timestamp )
 	        }
 
+            var shimVal = 220;
+
+            if (isMobile){ shimVal = 140 }
+
+                console.log(shimVal)
+
             if(transfer.longFee > bigDealThreshold || transfer.playerName == "Bernardo Silva" ){
                 transfer.bigDeal = true;
                 transfer.newClub = transfer['What is the new club?'];
@@ -174,10 +180,18 @@ const dateScale = d3.scaleLinear()
                 transfer.dateVal = {day: transfer.dateStamp.getDate() , month: monthStrings[transfer.dateStamp.getMonth()],  year: transfer.dateStamp.getFullYear()}
                 transfer.imgPath = process.env.PATH+'/assets/cutouts/'+transfer.refNum+'.png';
                 transfer.dealPos = dateScale(transfer.utcStamp);
-                
-                if ((prevDealPos + 220) > transfer.dealPos){
-                    transfer.dealPos = prevDealPos + 220;
+
+
+
+
+                 if (transfer.transferWindow == "summer2017"){
+                    transfer.dealPos = transfer.dealPos - shimVal;
                 }
+                if ((prevDealPos + shimVal) > transfer.dealPos){
+                    transfer.dealPos = prevDealPos + shimVal;
+                }
+
+               
 
                 prevDealPos = transfer.dealPos;
                 parasObj.objArr.push(transfer);
