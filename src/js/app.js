@@ -171,7 +171,7 @@ const dateScale = d3.scaleLinear()
 
             if (isMobile){ shimVal = 140 }
 
-            if (isMobile && transfer['Player name']=="Pierre-Emerick Aubameyang") { shimVal = 160 }   
+            if (isMobile && (transfer['Player name']=="Pierre-Emerick Aubameyang" || transfer['Player name']=="Ousmane Dembélé" )) { shimVal = 160 }   
 
                 console.log(shimVal)
 
@@ -185,6 +185,10 @@ const dateScale = d3.scaleLinear()
 
                 if (transfer.transferWindow == "summer2017"){
                     transfer.dealPos = transfer.dealPos - shimVal*2.5;
+                }
+
+                if (transfer.transferWindow == "summer2017" && isMobile){
+                    transfer.dealPos = transfer.dealPos - shimVal*3.25;
                 }
 
                 if (transfer.transferWindow == "jan2018"){
