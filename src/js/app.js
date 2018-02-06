@@ -173,6 +173,8 @@ const dateScale = d3.scaleLinear()
 
             if (isMobile && (transfer['Player name']=="Pierre-Emerick Aubameyang" || transfer['Player name']=="Ousmane Dembélé" )) { shimVal = 160 }   
 
+
+
                 console.log(shimVal)
 
             if(transfer.longFee > bigDealThreshold || transfer.playerName == "Bernardo Silva" ){
@@ -198,6 +200,8 @@ const dateScale = d3.scaleLinear()
                 if ((prevDealPos + shimVal) > transfer.dealPos){
                     transfer.dealPos = prevDealPos + shimVal;
                 }
+
+                if (transfer['Player name']=="Ousmane Dembélé") { transfer.dealPos += shimVal}   
 
                 prevDealPos = transfer.dealPos;
                 parasObj.objArr.push(transfer);
