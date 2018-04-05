@@ -89,7 +89,7 @@ const dateScale = d3.scaleLinear()
     	const data = allData[0].sheets.allDeals.filter(transfer => transfer["Transfer type"] === "fee");
 
 
-        //console.log(data)
+        
 
         let tempTotalFee = 0;
         let tempWinFee = 0;
@@ -262,23 +262,62 @@ const dateScale = d3.scaleLinear()
                 .tickSize(width)
                 .ticks(4).tickFormat(formatAbbreviation);
 
+
+            var windowData = groupBy(data, 'transferWindow');
+
+            windowData = sortByKeys(windowData);
+
+            console.log("knobs",windowData);
+
             const chartGroup = svgContainerEl.append("g").style("transform", "translateY(" + chartMargin.top + "px)")
 
             chartGroup.append("path")
-                .data([data])
+                .data([windowData[0].objArr])
                 .attr("class", "area")                                   
                 .style("fill", palette.gu_sport_background)
-                .attr("d", transfersArea);    
+                .attr("d", transfersArea); 
 
-            const transfersLineElDashed = chartGroup.append("path")
-                .data([data])
+            chartGroup.append("path")
+                .data([windowData[1].objArr])
+                .attr("class", "area")                                   
+                .style("fill", palette.gu_sport_background)
+                .attr("d", transfersArea);   
+
+            chartGroup.append("path")
+                .data([windowData[2].objArr])
+                .attr("class", "area")                                   
+                .style("fill", palette.gu_sport_background)
+                .attr("d", transfersArea);  
+
+            const transfersLineOne = chartGroup.append("path")
+                .data([windowData[0].objArr])
                 .style("stroke", palette.gu_sport)
                 .style("stroke-width", "1.5px")
                 .style("fill", "none")
-                .attr("id", "transfersLineDashed")
+                .attr("id", "transfersLineOne")
                 .attr("d", transfersLine);
 
-            chartGroup.append("g").classed("x-axis", true).call(xAxis).style("transform", "translateY(" + height + "px)")
+            const transfersLineTwo = chartGroup.append("path")
+                .data([windowData[2].objArr])
+                .style("stroke", palette.gu_sport)
+                .style("stroke-width", "1.5px")
+                .style("fill", "none")
+                .attr("id", "transfersLineTwo")
+                .attr("d", transfersLine);
+
+            const transfersLineThree = chartGroup.append("path")
+                .data([windowData[1].objArr])
+                .style("stroke", palette.gu_sport)
+                .style("stroke-width", "1.5px")
+                .style("fill", "none")
+                .attr("id", "transfersLineThree")
+                .attr("d", transfersLine);
+
+            chartGroup.append("g").classed("x-axis", true).call(xAxis).style("transform", "translateY(" + height + "px)");
+
+
+
+          
 
             const yAxisEl = chartGroup.append("g").classed("y-axis", true); 
 
@@ -335,17 +374,17 @@ const dateScale = d3.scaleLinear()
                 .style("stroke-dasharray", "2,2");
 
 
-            dividers.map((divider,i) => {
-                var recW = xScale(divider.end) - xScale(divider.start);
+            // dividers.map((divider,i) => {
+            //     var recW = xScale(divider.end) - xScale(divider.start);
 
-                chartGroup.select(".y-axis").append("rect")
-                    .attr("width", recW + 0.5)
-                    .attr("height",height +1)
-                    .attr("x", xScale(divider.start))
-                    .attr("y", 0)
-                    .attr("fill","#FFF")
+            //     chartGroup.select(".y-axis").append("rect")
+            //         .attr("width", recW + 0.5)
+            //         .attr("height",height +1)
+            //         .attr("x", xScale(divider.start))
+            //         .attr("y", 0)
+            //         .attr("fill","#FFF")
 
-            });
+            // });
 
             // chartGroup.select(".y-axis").append("line")
             //     .attr("class", "closedBar")
@@ -356,11 +395,15 @@ const dateScale = d3.scaleLinear()
             //     .style("stroke-width", "3px") 
             //     .style("stroke","#FFF");
 
-            document.querySelector("#hidden-svg path").setAttribute("d", transfersLine(data));
+            //document.querySelector("#hidden-svg path").setAttribute("d", transfersLine(data));
 
-            const lineLength = document.querySelector("#transfersLineDashed").getTotalLength();
+            const lineLengthOne = document.querySelector("#transfersLineOne").getTotalLength();
 
-            // console.log("lineLength",lineLength)
+            const lineLengthTwo = document.querySelector("#transfersLineTwo").getTotalLength();
+
+            const lineLengthThree = document.querySelector("#transfersLineThree").getTotalLength();
+
+            console.log("lineLength",lineLengthOne, lineLengthTwo, lineLengthThree)
             
             data.forEach((d) => {
                     if (d.bigDeal) {
@@ -402,6 +445,7 @@ const dateScale = d3.scaleLinear()
 
             setWindowAreaData(data);
 
+
             var twoWeeks = 1000 * 60 * 60 * 24 * 14;
 
        
@@ -413,24 +457,26 @@ const dateScale = d3.scaleLinear()
                 return winStr;
             }
 
-            transfersLineElDashed
-                .style("stroke-dasharray", lineLength)
-                .style("stroke-dashoffset", lineLength);
+            transfersLineOne
+                .style("stroke-dasharray", lineLengthOne)
+                .style("stroke-dashoffset", lineLengthOne);
 
-            positionParas(lineLength);    
+            transfersLineTwo
+                .style("stroke-dasharray", lineLengthTwo)
+                .style("stroke-dashoffset", lineLengthTwo);
+
+            transfersLineThree
+                .style("stroke-dasharray", lineLengthThree)
+                .style("stroke-dashoffset", lineLengthThree);  
             
-            checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl);
+            checkScroll(transfersLineOne, transfersLineTwo, transfersLineThree, elHeight, lineLengthOne, lineLengthTwo, lineLengthThree, interactiveChartEl, svgContainerEl);
           
-
  })
 
 
-function positionParas(lineLength){
-    console.log("lineLength", lineLength);
-}
 
 
-function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl) {
+function checkScroll(transfersLineOne, transfersLineTwo, transferLinesThree, elHeight, lineLengthOne, lineLengthTwo, lineLengthThree, interactiveChartEl, svgContainerEl) {
 
     window.requestAnimationFrame(() => {
         const scroll = window.pageYOffset;
@@ -460,7 +506,7 @@ function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveCha
 
             if(scrollDepth > 0.63 && scrollDepth < 0.87){ scrollDepth = 0.88  }
 
-            doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl);
+           doScrollEvent(transfersLineOne, transfersLineTwo, transferLinesThree, scrollDepth, lineLengthOne, lineLengthTwo, lineLengthThree,  svgContainerEl);
         }
 
         if (isApp && scroll !== prevScroll) {
@@ -487,17 +533,18 @@ function checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveCha
 
             
 
-            doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl);
+            doScrollEvent(transfersLineOne, transfersLineTwo, transferLinesThree, scrollDepth, lineLengthOne, lineLengthTwo, lineLengthThree,  svgContainerEl);
 
         }
 
-        checkScroll(transfersLineElDashed, elHeight, lineLength, interactiveChartEl, svgContainerEl);
+        checkScroll(transfersLineOne, transfersLineTwo, transferLinesThree, elHeight, lineLengthOne, lineLengthTwo, lineLengthThree, interactiveChartEl, svgContainerEl);
     });
 }
 
 
 
-function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContainerEl) {
+function doScrollEvent(transfersLineOne, transfersLineTwo, transferLinesThree, scrollDepth, lineLengthOne, lineLengthTwo, lineLengthThree,  svgContainerEl) {
+    var lineLength = lineLengthOne + lineLengthTwo + lineLengthThree;
 
     if (scrollDepth < 0) {
         scrollDepth = 0
@@ -509,29 +556,25 @@ function doScrollEvent(transfersLineElDashed, scrollDepth, lineLength, svgContai
         scrollDepth = 1;
     }
 
-   
 
     prevScrollDepth = scrollDepth;
 
-    
     const depthChange = Math.abs(scrollDepth - scrollDepth);
-
-
-
 
     var draw = lineLength - (scrollDepth * lineLength); 
 
+    if (draw < lineLengthOne){ transfersLineOne.transition().duration(2500 * depthChange).style("stroke-dashoffset", draw)}
+    if (draw > lineLengthOne && draw < lineLengthTwo){ transfersLineTwo.transition().duration(2500 * depthChange).style("stroke-dashoffset", draw)}
+    if (draw > lineLengthTwo && draw < lineLengthThree){ transfersLineThree.transition().duration(2500 * depthChange).style("stroke-dashoffset", draw)}
 
+    //var pt = targetLine.node().getPointAtLength(lineLength - draw);
 
-    var pt = transfersLineElDashed.node().getPointAtLength(lineLength - draw);
-console.log("scrollDepth",pt)
-    checkCircles(pt, lineLength - draw);
-
-    transfersLineElDashed
-        .transition().duration(2500 * depthChange).style("stroke-dashoffset", draw)
+    //checkCircles(pt, lineLength - draw);
 
      
 }
+
+
 
 function checkCircles(pt, draw){  
 
