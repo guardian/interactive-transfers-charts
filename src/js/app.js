@@ -267,8 +267,6 @@ const dateScale = d3.scaleLinear()
 
             windowData = sortByKeys(windowData);
 
-            console.log("knobs",windowData);
-
             const chartGroup = svgContainerEl.append("g").style("transform", "translateY(" + chartMargin.top + "px)")
 
             chartGroup.append("path")
@@ -478,6 +476,8 @@ const dateScale = d3.scaleLinear()
 
 function checkScroll(transfersLineOne, transfersLineTwo, transferLinesThree, elHeight, lineLengthOne, lineLengthTwo, lineLengthThree, interactiveChartEl, svgContainerEl) {
 
+
+
     window.requestAnimationFrame(() => {
         const scroll = window.pageYOffset;
 
@@ -543,29 +543,73 @@ function checkScroll(transfersLineOne, transfersLineTwo, transferLinesThree, elH
 
 
 
-function doScrollEvent(transfersLineOne, transfersLineTwo, transferLinesThree, scrollDepth, lineLengthOne, lineLengthTwo, lineLengthThree,  svgContainerEl) {
+function doScrollEvent(transfersLineOne, transfersLineTwo, transfersLineThree, scrollDepth, lineLengthOne, lineLengthTwo, lineLengthThree,  svgContainerEl) {
     var lineLength = lineLengthOne + lineLengthTwo + lineLengthThree;
+
+    var totalLength = lineLengthOne + lineLengthTwo + lineLengthThree;
+
+    var depthOne = (lineLengthOne / totalLength)
+    var depthTwo = (lineLengthTwo / totalLength)
+    var depthThree = (lineLengthThree / totalLength)
+
+    var activeLine;
+    var activeLineLength;
 
     if (scrollDepth < 0) {
         scrollDepth = 0
     }
-    if(scrollDepth > 0.63 && scrollDepth < 0.87){ 
-            scrollDepth = 0.88  
-    }
+
     if (scrollDepth > 1) {
         scrollDepth = 1;
     }
-
 
     prevScrollDepth = scrollDepth;
 
     const depthChange = Math.abs(scrollDepth - scrollDepth);
 
-    var draw = lineLength - (scrollDepth * lineLength); 
+    // console.log("scrollDepth",scrollDepth, depthChange);
 
-    if (draw < lineLengthOne){ transfersLineOne.transition().duration(2500 * depthChange).style("stroke-dashoffset", draw)}
-    if (draw > lineLengthOne && draw < lineLengthTwo){ transfersLineTwo.transition().duration(2500 * depthChange).style("stroke-dashoffset", draw)}
-    if (draw > lineLengthTwo && draw < lineLengthThree){ transfersLineThree.transition().duration(2500 * depthChange).style("stroke-dashoffset", draw)}
+    if(scrollDepth > 0 && scrollDepth < depthOne){
+        var drawOne = ((scrollDepth/depthOne)*lineLengthOne);  //lineLengthOne - ((scrollDepth - depthTwo - depthThree) * lineLengthOne);  relate this to depthOne and lineLengthOne
+        console.log("scrollOne", lineLengthOne, drawOne, scrollDepth,depthOne)
+        transfersLineOne.transition().duration(2500 * depthChange).style("stroke-dashoffset", lineLengthOne - drawOne);
+        
+    }
+    if(scrollDepth > depthOne && scrollDepth < depthTwo){
+        var drawTwo = (scrollDepth/depthTwo) * lineLengthTwo;
+        transfersLineTwo.transition().duration(2500 * depthChange).style("stroke-dashoffset",  lineLengthTwo - drawTwo);
+        transfersLineOne.transition().duration(2500 * depthChange).style("stroke-dashoffset", 0);
+        
+
+    } 
+    if(scrollDepth > depthTwo){
+        var drawThree = (scrollDepth/depthThree) * lineLengthThree; 
+        transfersLineThree.transition().duration(2500 * depthChange).style("stroke-dashoffset",  lineLengthThree - drawThree);
+
+        transfersLineOne.transition().duration(2500 * depthChange).style("stroke-dashoffset", 0);
+        transfersLineTwo.transition().duration(2500 * depthChange).style("stroke-dashoffset", 0);
+        
+    }
+
+    if(scrollDepth === 1){
+        transfersLineOne.transition().duration(2500 * depthChange).style("stroke-dashoffset", 0);
+        transfersLineTwo.transition().duration(2500 * depthChange).style("stroke-dashoffset", 0);
+        transfersLineThree.transition().duration(2500 * depthChange).style("stroke-dashoffset", 0);
+    }
+
+    
+   
+    //define draw and scrollDepth 3 times for each of the lines
+
+    // if (scrollDepth < lineLengthOne){ 
+    //     var draw = lineLengthOne - (scrollDepth * lineLengthOne); 
+    //     transfersLineOne.transition().duration(2500 * depthChange).style("stroke-dashoffset", draw);
+    // }
+    // if (scrollDepth > lineLengthOne && scrollDepth < lineLengthTwo){ 
+    //     var draw = lineLengthTwo - (scrollDepth * lineLengthTwo); 
+    //     transfersLineTwo.transition().duration(2500 * depthChange).style("stroke-dashoffset", draw);
+    // }
+    // if (scrollDepth > lineLengthTwo && scrollDepth < lineLengthThree){ transfersLineThree.transition().duration(2500 * depthChange).style("stroke-dashoffset", draw)}
 
     //var pt = targetLine.node().getPointAtLength(lineLength - draw);
 
